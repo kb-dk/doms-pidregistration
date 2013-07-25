@@ -1,5 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
+import dk.statsbiblioteket.pidregistration.doms.RepositoryHandler;
+import dk.statsbiblioteket.pidregistration.handleserver.PidResolverHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

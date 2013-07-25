@@ -1,4 +1,4 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.handleserver;
 
 /** Register and updated resolving infor for PIDs. */
 public interface PidResolverHandler {

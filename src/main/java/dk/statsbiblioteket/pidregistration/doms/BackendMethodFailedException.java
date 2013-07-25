@@ -1,4 +1,4 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.doms;
 
 /**
  * Exception signifying backend method failed.

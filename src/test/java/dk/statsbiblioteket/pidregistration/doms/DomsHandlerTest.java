@@ -1,5 +1,6 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.doms;
 
+import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import junit.framework.TestCase;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;

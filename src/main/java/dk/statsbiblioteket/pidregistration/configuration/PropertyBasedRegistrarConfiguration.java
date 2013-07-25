@@ -1,4 +1,4 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.configuration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

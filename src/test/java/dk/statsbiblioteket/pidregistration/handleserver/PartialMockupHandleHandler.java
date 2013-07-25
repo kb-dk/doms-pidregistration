@@ -1,14 +1,12 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.handleserver;
+
+import dk.statsbiblioteket.pidregistration.configuration.RegistrarConfiguration;
 
 /**
- * Mockup pid resolver handler that always succeeds, and count calls and
- * remembers parameters in public variables.
+ * Version of HandleHandler that mocks up the three updating methods, and
+ * counts invocations and remembers parameters in public variables.
  */
-public class MockupPidResolverHandler implements PidResolverHandler {
-    public int registerPidCount;
-    public String registerPidRepositoryId;
-    public String registerPidPid;
-    public String registerPidUrlPattern;
+public class PartialMockupHandleHandler extends HandleHandler {
     public int addUrlToPidAtServerCount;
     public String addUrlToPidAtServerPid;
     public String addUrlToPidAtServerUrl;
@@ -19,14 +17,13 @@ public class MockupPidResolverHandler implements PidResolverHandler {
     public String addPidToServerPid;
     public String addPidToServerUrl;
 
-    @Override
-    public void registerPid(String repositoryId, String pid, String urlPattern)
-            throws RegisteringPidFailedException {
-        registerPidCount++;
-        registerPidRepositoryId = repositoryId;
-        registerPidPid = pid;
-        registerPidUrlPattern = urlPattern;
-        //To change body of implemented methods use File | Settings | File Templates.
+    /**
+     * Initialize handle handler.
+     *
+     * @param config The configuration used.
+     */
+    public PartialMockupHandleHandler(RegistrarConfiguration config) {
+        super(config);
     }
 
     @Override

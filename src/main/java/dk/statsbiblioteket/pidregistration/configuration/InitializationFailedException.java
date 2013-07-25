@@ -1,4 +1,4 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.configuration;
 
 /**
  * Exception signifying initialization failure.

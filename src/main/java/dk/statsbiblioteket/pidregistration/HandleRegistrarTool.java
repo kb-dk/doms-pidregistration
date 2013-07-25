@@ -1,5 +1,9 @@
 package dk.statsbiblioteket.pidregistration;
 
+import dk.statsbiblioteket.pidregistration.doms.DomsHandler;
+import dk.statsbiblioteket.pidregistration.handleserver.HandleHandler;
+import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.configuration.RegistrarConfiguration;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;

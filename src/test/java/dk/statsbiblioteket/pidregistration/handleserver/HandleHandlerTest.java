@@ -1,7 +1,7 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.handleserver;
 
+import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import junit.framework.TestCase;
-import net.handle.hdllib.AbstractResponse;
 import net.handle.hdllib.AdminRecord;
 import net.handle.hdllib.Common;
 import net.handle.hdllib.CreateHandleRequest;

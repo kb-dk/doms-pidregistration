@@ -1,5 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
+import dk.statsbiblioteket.pidregistration.doms.DomsHandler;
+import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import junit.framework.TestCase;
 
 import java.util.Calendar;

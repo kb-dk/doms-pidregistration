@@ -1,5 +1,6 @@
-package dk.statsbiblioteket.pidregistration;
+package dk.statsbiblioteket.pidregistration.handleserver;
 
+import dk.statsbiblioteket.pidregistration.configuration.RegistrarConfiguration;
 import net.handle.hdllib.AbstractMessage;
 import net.handle.hdllib.AbstractResponse;
 import net.handle.hdllib.AddValueRequest;
@@ -221,9 +222,7 @@ public class HandleHandler implements PidResolverHandler {
         }
 
         // Check the response to see if operation was successful
-        if (response.responseCode == AbstractMessage.RC_SUCCESS) {
-            // Resolution successful, hooray
-        } else {
+        if (response.responseCode != AbstractMessage.RC_SUCCESS) {
             throw new RegisteringPidFailedException(
                     "Failed trying to add URL to handle at the server, "
                             + "response was " + response);
@@ -266,9 +265,7 @@ public class HandleHandler implements PidResolverHandler {
         }
 
         // Check the response to see if operation was successful
-        if (response.responseCode == AbstractMessage.RC_SUCCESS) {
-            // Resolution successful, hooray
-        } else {
+        if (response.responseCode != AbstractMessage.RC_SUCCESS) {
             throw new RegisteringPidFailedException(
                     "Failed trying to replace URL of handle at the server, response was " + response);
         }
@@ -331,9 +328,7 @@ public class HandleHandler implements PidResolverHandler {
         }
 
         // Check the response to see if operation was successful
-        if (response.responseCode == AbstractMessage.RC_SUCCESS) {
-            // Resolution successful, hooray
-        } else {
+        if (response.responseCode != AbstractMessage.RC_SUCCESS) {
             throw new RegisteringPidFailedException(
                     "Failed trying to create a new handle at the server, response was" + response);
         }

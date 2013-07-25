@@ -1,5 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
+import dk.statsbiblioteket.pidregistration.doms.MockupRepositoryHandler;
+import dk.statsbiblioteket.pidregistration.handleserver.MockupPidResolverHandler;
 import junit.framework.TestCase;
 
 /**
