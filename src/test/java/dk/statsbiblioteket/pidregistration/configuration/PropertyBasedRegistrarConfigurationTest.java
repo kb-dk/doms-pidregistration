@@ -9,7 +9,7 @@ import java.net.URL;
  * Test properties load as expected.
  */
 public class PropertyBasedRegistrarConfigurationTest extends TestCase {
-    private RegistrarConfiguration config
+    private PropertyBasedRegistrarConfiguration config
             = new PropertyBasedRegistrarConfiguration(
             getClass().getResourceAsStream("/handleregistrar.properties"));
 
@@ -41,5 +41,9 @@ public class PropertyBasedRegistrarConfigurationTest extends TestCase {
 
     public void testGetPrivateKeyPassword() {
         assertEquals("", config.getPrivateKeyPassword());
+    }
+
+    public void testGetPidResolverPrefix() {
+        assertEquals("http://pid.statsbiblioteket.dk/pidresolver", config.getPidResolverPrefix());
     }
 }

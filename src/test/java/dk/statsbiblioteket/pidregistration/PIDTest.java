@@ -1,7 +1,8 @@
 package dk.statsbiblioteket.pidregistration;
 
-import dk.statsbiblioteket.pidregistration.doms.DomsHandler;
+import dk.statsbiblioteket.pidregistration.doms.DOMS;
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.doms.DOMSQueryBuilder;
 import junit.framework.TestCase;
 
 import java.util.Calendar;
@@ -14,11 +15,11 @@ public class PIDTest extends TestCase {
     private PropertyBasedRegistrarConfiguration config
             = new PropertyBasedRegistrarConfiguration(
             getClass().getResourceAsStream("/handleregistrar.properties"));
-    private DomsHandler domsHandler;
+    private DOMS domsHandler;
 
     @Override
     protected void setUp() throws Exception {
-         domsHandler = new DomsHandler(config);
+         domsHandler = new DOMS(config);
     }
 
     /*
@@ -37,9 +38,9 @@ public class PIDTest extends TestCase {
         january1st2013.clear();
         january1st2013.set(2013, Calendar.JANUARY, 1);
 
-        String query = PIDDOMSQueryBuilder.buildQuery(january1st2013.getTime());
+        DOMSQueryBuilder queryBuilder = new DOMSQueryBuilder(Collection.DOMS_REKLAMEFILM, january1st2013.getTime());
 
-        List<String> objectIds = domsHandler.findObjectFromQuery(query);
+        List<String> objectIds = domsHandler.findObjectsFromQuery(queryBuilder.build());
 
         // - For all candidates:
         for (String id : objectIds) {

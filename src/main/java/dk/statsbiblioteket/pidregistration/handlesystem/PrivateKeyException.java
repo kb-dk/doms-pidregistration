@@ -1,4 +1,4 @@
-package dk.statsbiblioteket.pidregistration.handleserver;
+package dk.statsbiblioteket.pidregistration.handlesystem;
 
 /**
  * Exception signifying something went wrong loading the handle private key.

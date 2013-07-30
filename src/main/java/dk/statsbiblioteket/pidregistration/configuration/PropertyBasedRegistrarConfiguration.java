@@ -15,17 +15,17 @@ import java.util.Properties;
 /**
  * Configuration read by property file.
  */
-public class PropertyBasedRegistrarConfiguration
-        implements RegistrarConfiguration {
+public class PropertyBasedRegistrarConfiguration {
     private Properties properties;
     private final Log log = LogFactory.getLog(getClass());
-    public static final String FEDORA_LOCATION_KEY = "dk.statsbiblioteket.doms.tools.handleregistrar.fedoraLocation";
-    public static final String USER_NAME_KEY = "dk.statsbiblioteket.doms.tools.handleregistrar.userName";
-    public static final String PASSWORD_KEY = "dk.statsbiblioteket.doms.tools.handleregistrar.password";
-    public static final String DOMS_WS_API_ENDPOINT_KEY = "dk.statsbiblioteket.doms.tools.handleregistrar.domsWSAPIEndpoint";
-    public static final String HANDLE_PREFIX_KEY = "dk.statsbiblioteket.doms.tools.handleregistrar.handlePrefix";
-    public static final String PRIVATE_KEY_PATH = "dk.statsbiblioteket.doms.tools.handleregistrar.privateKeyPath";
-    public static final String PRIVATE_KEY_PASSWORD = "dk.statsbiblioteket.doms.tools.handleregistrar.privateKeyPassword";
+    public static final String FEDORA_LOCATION_KEY = "pidregistration.fedoraLocation";
+    public static final String USER_NAME_KEY = "pidregistration.userName";
+    public static final String PASSWORD_KEY = "pidregistration.password";
+    public static final String DOMS_WS_API_ENDPOINT_KEY = "pidregistration.domsWSAPIEndpoint";
+    public static final String HANDLE_PREFIX_KEY = "pidregistration.handlePrefix";
+    public static final String PRIVATE_KEY_PATH = "pidregistration.privateKeyPath";
+    public static final String PRIVATE_KEY_PASSWORD = "pidregistration.privateKeyPassword";
+    public static final String PID_RESOLVER_PREFIX = "pidregistration.pidResolverPrefix";
 
     public PropertyBasedRegistrarConfiguration(File propertiesFile) {
         try {
@@ -50,22 +50,18 @@ public class PropertyBasedRegistrarConfiguration
         log.debug("Read configuration properties");
     }
 
-    @Override
     public String getFedoraLocation() {
         return properties.getProperty(FEDORA_LOCATION_KEY);
     }
 
-    @Override
     public String getUsername() {
         return properties.getProperty(USER_NAME_KEY);
     }
 
-    @Override
     public String getPassword() {
         return properties.getProperty(PASSWORD_KEY);
     }
 
-    @Override
     public URL getDomsWSAPIEndpoint() {
         try {
             return new URL(properties.getProperty(DOMS_WS_API_ENDPOINT_KEY));
@@ -74,18 +70,19 @@ public class PropertyBasedRegistrarConfiguration
         }
     }
 
-    @Override
     public String getHandlePrefix() {
         return properties.getProperty(HANDLE_PREFIX_KEY);
     }
 
-    @Override
     public String getPrivateKeyPath() {
         return properties.getProperty(PRIVATE_KEY_PATH);
     }
 
-    @Override
     public String getPrivateKeyPassword() {
         return properties.getProperty(PRIVATE_KEY_PASSWORD);
+    }
+
+    public String getPidResolverPrefix() {
+        return properties.getProperty(PID_RESOLVER_PREFIX);
     }
 }

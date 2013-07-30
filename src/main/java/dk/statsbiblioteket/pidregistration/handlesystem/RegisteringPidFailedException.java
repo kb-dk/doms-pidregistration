@@ -1,4 +1,4 @@
-package dk.statsbiblioteket.pidregistration.handleserver;
+package dk.statsbiblioteket.pidregistration.handlesystem;
 
 /**
  * In case trying to resolve a handle failed abnormally
