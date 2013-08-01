@@ -57,8 +57,8 @@ public class HandleRegistrationsIntegrationTest {
     @Test
     public void testRegistrations() throws TransformerException, HandleException {
         new NonStrictExpectations() {{
-            doms.findObjectsFromQuery(withSubstring("ContentModel_Program")); result = TV_IDS_UNDER_TEST;
-            doms.findObjectsFromQuery(withSubstring("ContentModel_Reklamefilm")); result = REKLAME_IDS_UNDER_TEST;
+            doms.findObjectsFromQuery(withMatch("[^$]+ContentModel_Program[^$]+OFFSET 0$")); result = TV_IDS_UNDER_TEST;
+            doms.findObjectsFromQuery(withMatch("[^$]+ContentModel_Reklamefilm[^$]+OFFSET 0$")); result = REKLAME_IDS_UNDER_TEST;
         }};
 
         HandleRegistrations handleRegistrations = new HandleRegistrations(CONFIG,

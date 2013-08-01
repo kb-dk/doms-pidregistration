@@ -8,11 +8,15 @@ import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class HandleRegistrations {
     private final Log log = LogFactory.getLog(getClass());
+
+    private static final int DOMS_WINDOW_SIZE = 100;
+
     private int success = 0;
     private int noWorkDone = 0;
     private int failure = 0;
@@ -37,19 +41,26 @@ public class HandleRegistrations {
             switch (collection) {
                 case DOMS_RADIO_TV:
                 case DOMS_REKLAMEFILM:
-                    handleDomsObjects(collection);
+                    DOMSQueryBuilder queryBuilder = new DOMSQueryBuilder(collection, fromInclusive, DOMS_WINDOW_SIZE);
+                    boolean done = false;
+                    while (!done) {
+                        List<String> objectIds = doms.findObjectsFromQuery(queryBuilder.next());
+                        if (objectIds.isEmpty()) {
+                            done = true;
+                        } else {
+                            handleObjects(collection, objectIds);
+                        }
+                    }
                     break;
                 default:
                     throw new UnknownCollectionException("Unknown collection: " + collection);
             }
         }
-        String message = String.format("Done adding handles. #success: %d #noWorkDone: %d #failure: %d", success, noWorkDone, failure);
+        String message = String.format("Done adding handles. #success: %s #noWorkDone: %s #failure: %s", success, noWorkDone, failure);
         log.info(message);
     }
 
-    private void handleDomsObjects(Collection collection) {
-        DOMSQueryBuilder queryBuilder = new DOMSQueryBuilder(collection, fromInclusive);
-        List<String> objectIds = doms.findObjectsFromQuery(queryBuilder.build());
+    private void handleObjects(Collection collection, List<String> objectIds) {
         for (String objectId : objectIds) {
             try {
                 log.debug(String.format("Handling object ID '%s'", objectId));

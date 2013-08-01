@@ -17,17 +17,26 @@ public class DOMSQueryBuilder {
             " )\n" +
             "} ORDER BY ?date";
 
+    private static final String PAGE_TEMPLATE = "LIMIT %s OFFSET %s";
+
     private Collection collection;
     private Date fromInclusive;
+    private int windowSize;
+    private int offset = 0;
 
-    public DOMSQueryBuilder(Collection collection, Date fromInclusive) {
+    public DOMSQueryBuilder(Collection collection, Date fromInclusive, int windowSize) {
         this.collection = collection;
         this.fromInclusive = fromInclusive;
+        this.windowSize = windowSize;
     }
 
-    public String build() {
+    public String next() {
         SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.'SSS'Z'");
-        return String.format(QUERY_TEMPLATE, translate(), iso8601Format.format(fromInclusive));
+        String query =
+                String.format(QUERY_TEMPLATE + " " + PAGE_TEMPLATE,
+                              translate(), iso8601Format.format(fromInclusive), windowSize, offset);
+        offset += windowSize;
+        return query;
     }
 
     private String translate() {
