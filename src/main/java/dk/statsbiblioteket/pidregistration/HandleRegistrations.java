@@ -66,17 +66,24 @@ public class HandleRegistrations {
                 log.debug(String.format("Handling object ID '%s'", objectId));
                 Metadata metadata = doms.getMetadataForObject(objectId);
                 PIDHandle handle = buildHandle(objectId);
+                boolean domsChanged = false;
                 if (!metadata.handleExists(handle)) {
                     log.debug(String.format("Attaching PID handle '%s' to object ID '%s'", handle, objectId));
                     metadata.attachHandle(handle);
                     doms.updateMetadataForObject(objectId, metadata);
-                    log.debug(String.format("Attaching PID handle '%s' in global registry", handle));
-                    handleRegistry.registerPid(handle, buildUrl(collection, handle));
-                    success++;
+                    domsChanged = true;
                 } else {
                     log.debug(String.format(
-                            "PID handle '%s' already attached to object ID '%s'. No further work done.", handle, objectId
+                            "PID handle '%s' already attached to object ID '%s'. Not added to DOMS", handle, objectId
                     ));
+                }
+
+                log.debug(String.format("Attaching PID handle '%s' in global registry", handle));
+                boolean handleRegistryChanged = handleRegistry.registerPid(handle, buildUrl(collection, handle));
+
+                if (domsChanged || handleRegistryChanged) {
+                    success++;
+                } else {
                     noWorkDone++;
                 }
             } catch (Exception e) {

@@ -92,7 +92,6 @@ public class HandleRegistrationsIntegrationTest {
 
         handleRegistrations.doRegistrations();
 
-
         for (String objectId : idsToBePutInDoms) {
             metadata = doms.getMetadataForObject(objectId);
             PIDHandle handle = new PIDHandle(CONFIG.getHandlePrefix(), objectId);

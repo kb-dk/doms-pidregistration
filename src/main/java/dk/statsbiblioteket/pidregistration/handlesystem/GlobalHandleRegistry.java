@@ -51,7 +51,7 @@ public class GlobalHandleRegistry {
         return privateKeyLoader.load();
     }
 
-    public void registerPid(PIDHandle handle, String url)
+    public boolean registerPid(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
         log.debug("Registering handle '" + handle + "' for url '" + url + "'");
         HandleValue[] values = lookupHandle(handle);
@@ -59,23 +59,24 @@ public class GlobalHandleRegistry {
         if (values == null) {
             log.debug("Handle '" + handle + "' was previously unknown. Adding with url '" + url + "'");
             createPidWithUrl(handle, url);
-            return;
+            return true;
         }
 
         String urlAtServer = findFirstWithTypeUrl(values);
         if (urlAtServer == null) {
             log.debug("Handle '" + handle + "' already registered, but with no url. Adding '" + url + "'");
             addUrlToPid(handle, url);
-            return;
+            return true;
         }
 
         if (!urlAtServer.equalsIgnoreCase(url)) {
             log.debug("Handle '" + handle + "' already registered with different" + " url '" + urlAtServer + "'. Replacing with '" + url + "'");
             replaceUrlOfPid(handle, url);
-            return;
+            return true;
         }
 
         log.debug("Handle '" + handle + "' already registered with url '" + url + "'. Doing nothing.");
+        return false;
     }
 
     private HandleValue[] lookupHandle(PIDHandle handle) {
