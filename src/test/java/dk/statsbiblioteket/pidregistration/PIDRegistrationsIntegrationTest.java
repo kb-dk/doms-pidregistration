@@ -2,7 +2,7 @@ package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import dk.statsbiblioteket.pidregistration.doms.DOMS;
-import dk.statsbiblioteket.pidregistration.doms.Metadata;
+import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyException;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyLoader;
@@ -33,12 +33,12 @@ import static org.junit.Assert.*;
  * NOTE: This test will _only_ work if the fedora mentioned in the test
  * config is available and contains the expected data.
  */
-public class HandleRegistrationsIntegrationTest {
+public class PIDRegistrationsIntegrationTest {
 
 
     private static final PropertyBasedRegistrarConfiguration CONFIG
             = new PropertyBasedRegistrarConfiguration(
-            HandleRegistrationsIntegrationTest.class.getResourceAsStream("/handleregistrar.properties"));
+            PIDRegistrationsIntegrationTest.class.getResourceAsStream("/handleregistrar.properties"));
 
 
     @Mocked(methods = "findObjectsFromQuery(String)")
@@ -61,7 +61,7 @@ public class HandleRegistrationsIntegrationTest {
             doms.findObjectsFromQuery(withMatch("[^$]+ContentModel_Reklamefilm[^$]+OFFSET 0$")); result = REKLAME_IDS_UNDER_TEST;
         }};
 
-        HandleRegistrations handleRegistrations = new HandleRegistrations(CONFIG,
+        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG,
                                                                           doms,
                                                                           handleRegistry,
                                                                           createTestDate());
@@ -75,7 +75,7 @@ public class HandleRegistrationsIntegrationTest {
         HandleResolver handleResolver = new HandleResolver();
 
         for (String objectId : idsToBePutInDoms) {
-            Metadata metadata = doms.getMetadataForObject(objectId);
+            DOMSMetadata metadata = doms.getMetadataForObject(objectId);
             PIDHandle handle = new PIDHandle(CONFIG.getHandlePrefix(), objectId);
             assertFalse(metadata.handleExists(handle));
 
@@ -87,10 +87,10 @@ public class HandleRegistrationsIntegrationTest {
             }
         }
 
-        Metadata metadata = doms.getMetadataForObject(alreadyModified);
+        DOMSMetadata metadata = doms.getMetadataForObject(alreadyModified);
         assertTrue(metadata.handleExists(new PIDHandle(CONFIG.getHandlePrefix(), alreadyModified)));
 
-        handleRegistrations.doRegistrations();
+        PIDRegistrations.doRegistrations();
 
         for (String objectId : idsToBePutInDoms) {
             metadata = doms.getMetadataForObject(objectId);
@@ -125,7 +125,7 @@ public class HandleRegistrationsIntegrationTest {
         for (String objectId : idsToRestore) {
             String resourceName = "/" + objectId.subSequence(5, objectId.length()) + ".xml";
             Document original = DOM.streamToDOM(getClass().getResourceAsStream(resourceName));
-            doms.updateMetadataForObject(objectId, new Metadata(original));
+            doms.updateMetadataForObject(objectId, new DOMSMetadata(original));
         }
     }
 

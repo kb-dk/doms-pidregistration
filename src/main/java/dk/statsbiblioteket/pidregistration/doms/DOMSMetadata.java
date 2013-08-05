@@ -6,7 +6,11 @@ import dk.statsbiblioteket.util.xml.XPathSelector;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-public class Metadata {
+/**
+ * Responsible for querying and modifying the DOMS XML metadata. This metadata is where the handle is located after
+ * it has been constructed for the DOMS object
+ */
+public class DOMSMetadata {
     private static final String OAI_NAMESPACE = "http://www.openarchives.org/OAI/2.0/oai_dc/";
     private static final String DC_NAMESPACE = "http://purl.org/dc/elements/1.1/";
 
@@ -17,7 +21,7 @@ public class Metadata {
 
     private Document namespaceAwareDom;
 
-    public Metadata(Document namespaceAwareDom) {
+    public DOMSMetadata(Document namespaceAwareDom) {
         this.namespaceAwareDom = namespaceAwareDom;
     }
 

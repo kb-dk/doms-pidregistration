@@ -16,8 +16,12 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class HandleRegistrationsTool {
-    private static Log log = LogFactory.getLog(HandleRegistrationsTool.class);
+/**
+ * Entry point for batch job. Responsible for parsing command line arguments
+ *
+ */
+public class PIDRegistrationsCommandLineInterface {
+    private static Log log = LogFactory.getLog(PIDRegistrationsCommandLineInterface.class);
 
     private static final SimpleDateFormat YEAR_MONTH_DAY = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -28,9 +32,7 @@ public class HandleRegistrationsTool {
                 System.exit(1);
             }
 
-            String configFile = line.hasOption("c") ? line.getOptionValue("c") : System.getProperty("user.home")
-                    + "/.config/handle/handleregistrar.properties"
-                    .replaceAll("/", System.getProperty("file.separator"));
+            String configFile = line.hasOption("c") ? line.getOptionValue("c") : System.getProperty("user.home");
 
             log.info("Config file: " + configFile);
             log.info("From: " + line.getOptionValue("d"));
@@ -40,13 +42,13 @@ public class HandleRegistrationsTool {
             PropertyBasedRegistrarConfiguration config = new PropertyBasedRegistrarConfiguration(
                     new File(configFile));
 
-            HandleRegistrations handleRegistrations = new HandleRegistrations(
+            PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     new DOMS(config),
                     new GlobalHandleRegistry(config),
                     fromInclusive);
 
-            handleRegistrations.doRegistrations();
+            pidRegistrations.doRegistrations();
         } catch (Exception e) {
             System.err.println("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             log.error(e);

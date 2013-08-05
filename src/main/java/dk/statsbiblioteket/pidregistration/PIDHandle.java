@@ -1,6 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
 /**
+ * PID Handle bean
  */
 public class PIDHandle {
     private String namespace;

@@ -15,6 +15,9 @@ import org.apache.commons.logging.LogFactory;
 import java.nio.charset.Charset;
 import java.security.PrivateKey;
 
+/**
+ * Responsible for communications with the global handle registry
+ */
 public class GlobalHandleRegistry {
     private static final Log log = LogFactory.getLog(GlobalHandleRegistry.class);
 
@@ -25,7 +28,7 @@ public class GlobalHandleRegistry {
     private static final int URL_RECORD_INDEX = 1;
     private final PropertyBasedRegistrarConfiguration config;
 
-    private RequestBuilder requestBuilder;
+    private HandleRequestBuilder handleRequestBuilder;
 
     public GlobalHandleRegistry(PropertyBasedRegistrarConfiguration config) {
         this.config = config;
@@ -34,7 +37,7 @@ public class GlobalHandleRegistry {
         PublicKeyAuthenticationInfo pubKeyAuthInfo = new PublicKeyAuthenticationInfo(
                 adminId.getBytes(DEFAULT_ENCODING), ADMIN_ID_INDEX, loadPrivateKey());
 
-        requestBuilder = new RequestBuilder(adminId,
+        handleRequestBuilder = new HandleRequestBuilder(adminId,
                                             ADMIN_ID_INDEX,
                                             ADMIN_RECORD_INDEX,
                                             URL_RECORD_INDEX,
@@ -51,6 +54,14 @@ public class GlobalHandleRegistry {
         return privateKeyLoader.load();
     }
 
+    /**
+     * Registers/Updates the URL in the global handle registry.
+     * @param handle the handle
+     * @param url the URL
+     * @return true if URL was registered. False if nothing was done because the same URL already was
+     * already registered on the handle
+     * @throws RegisteringPidFailedException external server failed
+     */
     public boolean registerPid(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
         log.debug("Registering handle '" + handle + "' for url '" + url + "'");
@@ -106,7 +117,7 @@ public class GlobalHandleRegistry {
 
     private void createPidWithUrl(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
-        AbstractRequest request = requestBuilder.buildCreateHandleRequest(handle, url);
+        AbstractRequest request = handleRequestBuilder.buildCreateHandleRequest(handle, url);
         processRequest(request);
     }
 
@@ -127,13 +138,13 @@ public class GlobalHandleRegistry {
 
     private void addUrlToPid(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
-        AbstractRequest request = requestBuilder.buildAddValueRequest(handle, url);
+        AbstractRequest request = handleRequestBuilder.buildAddUrlRequest(handle, url);
         processRequest(request);
     }
 
     private void replaceUrlOfPid(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
-        AbstractRequest request = requestBuilder.buildModifyValueRequest(handle, url);
+        AbstractRequest request = handleRequestBuilder.buildModifyUrlRequest(handle, url);
         processRequest(request);
     }
 }

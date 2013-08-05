@@ -1,6 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
 /**
+ * The currently supported collections
  */
 public enum Collection {
     DOMS_RADIO_TV("doms_radioTVCollection"),

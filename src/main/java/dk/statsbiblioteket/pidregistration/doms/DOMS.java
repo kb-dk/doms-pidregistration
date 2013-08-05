@@ -11,6 +11,9 @@ import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarC
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Responsible for communications with DOMS
+ */
 public class DOMS {
     private static final Client REST_CLIENT = Client.create();
 
@@ -63,9 +66,9 @@ public class DOMS {
                 (config.getUsername() + ":" + config.getPassword()).getBytes());
     }
 
-    public Metadata getMetadataForObject(String objectId) {
+    public DOMSMetadata getMetadataForObject(String objectId) {
         try {
-            return new Metadata(getDomsClient().getDataStream(objectId, DC_DATASTREAM_ID));
+            return new DOMSMetadata(getDomsClient().getDataStream(objectId, DC_DATASTREAM_ID));
         } catch (ServerOperationFailed serverOperationFailed) {
             throw new BackendMethodFailedException(
                     "Backendmethod failed while trying to to read DC from '"
@@ -81,7 +84,7 @@ public class DOMS {
     }
 
 
-    public void updateMetadataForObject(String objectId, Metadata metadata) {
+    public void updateMetadataForObject(String objectId, DOMSMetadata metadata) {
         try {
             DomsWSClient domsClient = getDomsClient();
             domsClient.unpublishObjects("Prepare to add handle PID", objectId);

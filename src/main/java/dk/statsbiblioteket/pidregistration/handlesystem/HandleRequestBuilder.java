@@ -14,8 +14,9 @@ import net.handle.hdllib.ValueReference;
 import java.nio.charset.Charset;
 
 /**
+ * Responsible for building requests used modify the global handle registry data
  */
-public class RequestBuilder {
+public class HandleRequestBuilder {
 
     /**
      * Admin index aka Handle index, default value 300
@@ -35,9 +36,9 @@ public class RequestBuilder {
     private Charset encoding;
     private AuthenticationInfo authenticationInfo;
 
-    public RequestBuilder(String adminId, int adminIdIndex, int adminRecordIndex,
-                          int valueRecordIndex,
-                          Charset encoding, AuthenticationInfo authenticationInfo) {
+    public HandleRequestBuilder(String adminId, int adminIdIndex, int adminRecordIndex,
+                                int valueRecordIndex,
+                                Charset encoding, AuthenticationInfo authenticationInfo) {
         this.adminId = adminId;
         this.adminIdIndex = adminIdIndex;
         this.adminRecordIndex = adminRecordIndex;
@@ -46,10 +47,16 @@ public class RequestBuilder {
         this.authenticationInfo = authenticationInfo;
     }
 
-    public CreateHandleRequest buildCreateHandleRequest(PIDHandle handle, String value) {
+    /**
+     * Used for creating a new handle and attaching a URL to it
+     * @param handle the handle
+     * @param url the URL
+     * @return the finished request
+     */
+    public CreateHandleRequest buildCreateHandleRequest(PIDHandle handle, String url) {
         HandleValue[] handleValues = {
                 buildHandleValue(adminRecordIndex, "HS_ADMIN", Encoder.encodeAdminRecord(buildAdminRecord())),
-                buildHandleValue(valueRecordIndex, "URL", encode(value))
+                buildHandleValue(valueRecordIndex, "URL", encode(url))
         };
         return new CreateHandleRequest(encode(handle.asString()), handleValues, authenticationInfo);
     }
@@ -89,13 +96,25 @@ public class RequestBuilder {
                                PUBLIC_WRITE);
     }
 
-    public ModifyValueRequest buildModifyValueRequest(PIDHandle handle, String value) {
-        HandleValue handleValue = buildHandleValue(valueRecordIndex, "URL", encode(value));
+    /**
+     * Used for replacing a URL attached to an existing handle
+     * @param handle the handle
+     * @param url the URL to replace the existing URL
+     * @return the finished request
+     */
+    public ModifyValueRequest buildModifyUrlRequest(PIDHandle handle, String url) {
+        HandleValue handleValue = buildHandleValue(valueRecordIndex, "URL", encode(url));
         return new ModifyValueRequest(encode(handle.asString()), handleValue, authenticationInfo);
     }
 
-    public AddValueRequest buildAddValueRequest(PIDHandle handle, String value) {
-        HandleValue handleValue = buildHandleValue(valueRecordIndex, "URL", encode(value));
+    /**
+     * Used for adding a URL to an existing handle with no URL attached
+     * @param handle the existing handle
+     * @param url the URL to be added
+     * @return the finished request
+     */
+    public AddValueRequest buildAddUrlRequest(PIDHandle handle, String url) {
+        HandleValue handleValue = buildHandleValue(valueRecordIndex, "URL", encode(url));
         return new AddValueRequest(encode(handle.asString()), handleValue, authenticationInfo);
     }
 }

@@ -8,13 +8,12 @@ import java.io.File;
 import java.security.PrivateKey;
 
 /**
+ * Responsible for loading the private key
  */
 public class PrivateKeyLoader {
     private final Log log = LogFactory.getLog(getClass());
 
-    private static final String DEFAULT_PRIVATE_KEY_PATH = System.getProperty("user.home")
-            + System.getProperty("file.separator") + ".config"
-            + System.getProperty("file.separator") + "handle";
+    private static final String DEFAULT_PRIVATE_KEY_PATH = System.getProperty("user.home");
 
     private static final String PRIVATE_KEY_FILENAME = "admpriv.bin";
 

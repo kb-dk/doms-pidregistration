@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
+ * Responsible for building the DOMS queries. In this context queries can be varied with respect to media collection
+ * and date last modified. Furthermore, the query structure supports pagination.
  */
 public class DOMSQueryBuilder {
     private static final String QUERY_TEMPLATE = "SELECT ?object ?date WHERE {\n" +
@@ -20,22 +22,34 @@ public class DOMSQueryBuilder {
     private static final String PAGE_TEMPLATE = "LIMIT %s OFFSET %s";
 
     private Collection collection;
-    private Date fromInclusive;
-    private int windowSize;
+    private Date fromLastModificationDateInclusive;
+    private int pageSize;
     private int offset = 0;
 
-    public DOMSQueryBuilder(Collection collection, Date fromInclusive, int windowSize) {
+    /**
+     * Construction
+     *
+     * @param collection The media collection in question
+     * @param fromLastModificationDateInclusive the last modification date
+     * @param pageSize the page size used for pagination
+     */
+    public DOMSQueryBuilder(Collection collection, Date fromLastModificationDateInclusive, int pageSize) {
         this.collection = collection;
-        this.fromInclusive = fromInclusive;
-        this.windowSize = windowSize;
+        this.fromLastModificationDateInclusive = fromLastModificationDateInclusive;
+        this.pageSize = pageSize;
     }
 
+    /**
+     * Get next query with respect to pagination (for performance reasons)
+     *
+     * @return the next query
+     */
     public String next() {
         SimpleDateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.'SSS'Z'");
         String query =
                 String.format(QUERY_TEMPLATE + " " + PAGE_TEMPLATE,
-                              translate(), iso8601Format.format(fromInclusive), windowSize, offset);
-        offset += windowSize;
+                              translate(), iso8601Format.format(fromLastModificationDateInclusive), pageSize, offset);
+        offset += pageSize;
         return query;
     }
 
