@@ -1,7 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
-import dk.statsbiblioteket.pidregistration.doms.DOMS;
+import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -9,8 +9,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -21,7 +21,8 @@ import java.util.Date;
  *
  */
 public class PIDRegistrationsCommandLineInterface {
-    private static Log log = LogFactory.getLog(PIDRegistrationsCommandLineInterface.class);
+
+    private static final Logger log = LoggerFactory.getLogger(PIDRegistrationsCommandLineInterface.class);
 
     private static final SimpleDateFormat YEAR_MONTH_DAY = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -44,14 +45,14 @@ public class PIDRegistrationsCommandLineInterface {
 
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
-                    new DOMS(config),
+                    new DOMSClient(config),
                     new GlobalHandleRegistry(config),
                     fromInclusive);
 
             pidRegistrations.doRegistrations();
         } catch (Exception e) {
             System.err.println("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            log.error(e);
+            log.error(e.getMessage());
             System.exit(2);
         }
     }
@@ -68,7 +69,7 @@ public class PIDRegistrationsCommandLineInterface {
         CommandLine line;
         Option help = new Option("h", "help", false, "Print this message");
         Option configFileOption = new Option("c", "config-file", true,
-                                             "Configuration file. Default is $HOME/.config/handle/handleregistrar.properties");
+                                             "Configuration file. Default is $HOME");
         Option dateOption = new Option("d", "date", true,
                                        "the date (YYYY-MM-DD) to query from (inclusive)");
         dateOption.setRequired(true);

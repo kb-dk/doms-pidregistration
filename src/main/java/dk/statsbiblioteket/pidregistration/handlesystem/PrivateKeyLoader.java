@@ -1,8 +1,8 @@
 package dk.statsbiblioteket.pidregistration.handlesystem;
 
 import net.handle.hdllib.Util;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.security.PrivateKey;
@@ -11,7 +11,7 @@ import java.security.PrivateKey;
  * Responsible for loading the private key
  */
 public class PrivateKeyLoader {
-    private final Log log = LogFactory.getLog(getClass());
+    private static final Logger log = LoggerFactory.getLogger(PrivateKeyLoader.class);
 
     private static final String DEFAULT_PRIVATE_KEY_PATH = System.getProperty("user.home");
 

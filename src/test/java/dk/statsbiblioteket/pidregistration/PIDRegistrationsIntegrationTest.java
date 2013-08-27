@@ -1,12 +1,16 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
-import dk.statsbiblioteket.pidregistration.doms.DOMS;
+import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
+import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyException;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyLoader;
 import dk.statsbiblioteket.util.xml.DOM;
+import mockit.Expectations;
 import mockit.Mocked;
 import mockit.NonStrictExpectations;
 import net.handle.hdllib.DeleteHandleRequest;
@@ -15,7 +19,6 @@ import net.handle.hdllib.HandleResolver;
 import net.handle.hdllib.PublicKeyAuthenticationInfo;
 import org.junit.After;
 import org.junit.Test;
-import org.w3c.dom.Document;
 
 import javax.xml.transform.TransformerException;
 import java.nio.charset.Charset;
@@ -26,7 +29,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Test handle objects using online Fedora.
@@ -38,12 +45,14 @@ public class PIDRegistrationsIntegrationTest {
 
     private static final PropertyBasedRegistrarConfiguration CONFIG
             = new PropertyBasedRegistrarConfiguration(
-            PIDRegistrationsIntegrationTest.class.getResourceAsStream("/handleregistrar.properties"));
+            PIDRegistrationsIntegrationTest.class.getResourceAsStream("/pidregistration.properties"));
 
+    @Mocked
+    private DOMSObjectQueryer domsObjectQueryer = null;
 
-    @Mocked(methods = "findObjectsFromQuery(String)")
-    private DOMS doms = new DOMS(CONFIG);
-
+    private DOMSClient domsClient = new DOMSClient(CONFIG);
+    private DOMSMetadataQueryer domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
+    private DOMSUpdater domsUpdater = new DOMSUpdater(domsClient);
     private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG);
 
     private static final List<String> REKLAME_IDS_UNDER_TEST =
@@ -57,14 +66,15 @@ public class PIDRegistrationsIntegrationTest {
     @Test
     public void testRegistrations() throws TransformerException, HandleException {
         new NonStrictExpectations() {{
-            doms.findObjectsFromQuery(withMatch("[^$]+ContentModel_Program[^$]+OFFSET 0$")); result = TV_IDS_UNDER_TEST;
-            doms.findObjectsFromQuery(withMatch("[^$]+ContentModel_Reklamefilm[^$]+OFFSET 0$")); result = REKLAME_IDS_UNDER_TEST;
+
+            domsObjectQueryer.findNextIn(Collection.DOMS_RADIO_TV);
+            returns(TV_IDS_UNDER_TEST, new ArrayList<String>());
+
+            domsObjectQueryer.findNextIn(Collection.DOMS_REKLAMEFILM);
+            returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
         }};
 
-        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG,
-                                                                          doms,
-                                                                          handleRegistry,
-                                                                          createTestDate());
+        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, createTestDate());
 
         List<String> idsToBePutInDoms = new ArrayList<String>();
         idsToBePutInDoms.addAll(REKLAME_IDS_UNDER_TEST);
@@ -75,7 +85,7 @@ public class PIDRegistrationsIntegrationTest {
         HandleResolver handleResolver = new HandleResolver();
 
         for (String objectId : idsToBePutInDoms) {
-            DOMSMetadata metadata = doms.getMetadataForObject(objectId);
+            DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
             PIDHandle handle = new PIDHandle(CONFIG.getHandlePrefix(), objectId);
             assertFalse(metadata.handleExists(handle));
 
@@ -87,13 +97,13 @@ public class PIDRegistrationsIntegrationTest {
             }
         }
 
-        DOMSMetadata metadata = doms.getMetadataForObject(alreadyModified);
+        DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(alreadyModified);
         assertTrue(metadata.handleExists(new PIDHandle(CONFIG.getHandlePrefix(), alreadyModified)));
 
         PIDRegistrations.doRegistrations();
 
         for (String objectId : idsToBePutInDoms) {
-            metadata = doms.getMetadataForObject(objectId);
+            metadata = domsMetadataQueryer.getMetadataForObject(objectId);
             PIDHandle handle = new PIDHandle(CONFIG.getHandlePrefix(), objectId);
             assertTrue(metadata.handleExists(handle));
             String url = new String((handleResolver.resolveHandle(handle.asString()))[1].getData());
@@ -101,7 +111,7 @@ public class PIDRegistrationsIntegrationTest {
             assertTrue(url.startsWith("http://"));
         }
 
-        metadata = doms.getMetadataForObject(alreadyModified);
+        metadata = domsMetadataQueryer.getMetadataForObject(alreadyModified);
         assertTrue(metadata.handleExists(new PIDHandle(CONFIG.getHandlePrefix(), alreadyModified)));
     }
 
@@ -113,30 +123,30 @@ public class PIDRegistrationsIntegrationTest {
     }
 
     @After
-    public void teardown() throws HandleException {
+    public void teardown() throws HandleException, TransformerException {
         restoreDoms();
         restoreGlobalHandleRegistry();
     }
 
-    private void restoreDoms() {
+    private void restoreDoms() throws TransformerException {
         List<String> idsToRestore = new ArrayList<String>();
         idsToRestore.addAll(TV_IDS_UNDER_TEST);
         idsToRestore.addAll(REKLAME_IDS_UNDER_TEST);
         for (String objectId : idsToRestore) {
             String resourceName = "/" + objectId.subSequence(5, objectId.length()) + ".xml";
-            Document original = DOM.streamToDOM(getClass().getResourceAsStream(resourceName));
-            doms.updateMetadataForObject(objectId, new DOMSMetadata(original));
+            String original = DOM.domToString(DOM.streamToDOM(getClass().getResourceAsStream(resourceName)));
+            domsUpdater.update(objectId, new DOMSMetadata(original));
         }
     }
 
     private void restoreGlobalHandleRegistry() throws HandleException {
-         String adminIdPrefix = "0.NA/";
-         Charset defaultEncoding = Charset.forName("UTF8");
-         int adminIdIndex = 300;
+        String adminIdPrefix = "0.NA/";
+        Charset defaultEncoding = Charset.forName("UTF8");
+        int adminIdIndex = 300;
 
-         String adminId = adminIdPrefix + CONFIG.getHandlePrefix();
+        String adminId = adminIdPrefix + CONFIG.getHandlePrefix();
 
-         PublicKeyAuthenticationInfo authInfo = new PublicKeyAuthenticationInfo(
+        PublicKeyAuthenticationInfo authInfo = new PublicKeyAuthenticationInfo(
                 adminId.getBytes(defaultEncoding), adminIdIndex, loadPrivateKey());
 
         HandleResolver handleResolver = new HandleResolver();

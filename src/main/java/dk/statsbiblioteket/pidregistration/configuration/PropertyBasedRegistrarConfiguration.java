@@ -1,7 +1,7 @@
 package dk.statsbiblioteket.pidregistration.configuration;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,8 +16,9 @@ import java.util.Properties;
  * Configuration read by property file.
  */
 public class PropertyBasedRegistrarConfiguration {
+    private static final Logger log = LoggerFactory.getLogger(PropertyBasedRegistrarConfiguration.class);
+
     private Properties properties;
-    private final Log log = LogFactory.getLog(getClass());
     public static final String FEDORA_LOCATION_KEY = "pidregistration.fedoraLocation";
     public static final String USER_NAME_KEY = "pidregistration.userName";
     public static final String PASSWORD_KEY = "pidregistration.password";

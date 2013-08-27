@@ -9,8 +9,8 @@ import net.handle.hdllib.HandleException;
 import net.handle.hdllib.HandleResolver;
 import net.handle.hdllib.HandleValue;
 import net.handle.hdllib.PublicKeyAuthenticationInfo;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.security.PrivateKey;
@@ -19,7 +19,7 @@ import java.security.PrivateKey;
  * Responsible for communications with the global handle registry
  */
 public class GlobalHandleRegistry {
-    private static final Log log = LogFactory.getLog(GlobalHandleRegistry.class);
+    private static final Logger log = LoggerFactory.getLogger(GlobalHandleRegistry.class);
 
     private static final String ADMIN_ID_PREFIX = "0.NA/";
     private static final Charset DEFAULT_ENCODING = Charset.forName("UTF8");

@@ -6,6 +6,8 @@ import dk.statsbiblioteket.util.xml.XPathSelector;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+import javax.xml.transform.TransformerException;
+
 /**
  * Responsible for querying and modifying the DOMS XML metadata. This metadata is where the handle is located after
  * it has been constructed for the DOMS object
@@ -21,8 +23,8 @@ public class DOMSMetadata {
 
     private Document namespaceAwareDom;
 
-    public DOMSMetadata(Document namespaceAwareDom) {
-        this.namespaceAwareDom = namespaceAwareDom;
+    public DOMSMetadata(String metadata) {
+        this.namespaceAwareDom = DOM.stringToDOM(metadata, true);
     }
 
     public boolean handleExists(PIDHandle handle) {
@@ -40,7 +42,11 @@ public class DOMSMetadata {
         return result;
     }
 
-    public Document getNamespaceAwareDom() {
-        return namespaceAwareDom;
+    public String getMetadata() {
+        try {
+            return DOM.domToString(namespaceAwareDom);
+        } catch (TransformerException e) {
+            throw new RuntimeException("unexpected error when generating metadata XML", e);
+        }
     }
 }

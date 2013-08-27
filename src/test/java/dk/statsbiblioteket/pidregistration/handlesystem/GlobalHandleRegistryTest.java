@@ -15,7 +15,7 @@ public class GlobalHandleRegistryTest {
 
     private PropertyBasedRegistrarConfiguration config
             = new PropertyBasedRegistrarConfiguration(
-            getClass().getResourceAsStream("/handleregistrar.properties"));
+            getClass().getResourceAsStream("/pidregistration.properties"));
 
     @Mocked(methods = "registerPid(PIDHandle, String)", inverse = true)
     private GlobalHandleRegistry globalHandleRegistry = new GlobalHandleRegistry(config);

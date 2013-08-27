@@ -11,22 +11,7 @@
     <dependency>
       <groupId>dk.statsbiblioteket.sbutil</groupId>
       <artifactId>sbutil</artifactId>
-      <version>0.5.2</version>
-    </dependency>
-    <dependency>
-      <groupId>dk.statsbiblioteket.doms.ingestClient</groupId>
-      <artifactId>ingestClientImpl</artifactId>
-      <version>0.0.14</version>
-    </dependency>
-    <dependency>
-      <groupId>dk.statsbiblioteket.doms.domsutil</groupId>
-      <artifactId>domsutil-webservice-common</artifactId>
-      <version>0.0.20</version>
-    </dependency>
-    <dependency>
-      <groupId>dk.statsbiblioteket.doms.central</groupId>
-      <artifactId>centralWebservice-interface</artifactId>
-      <version>0.0.26</version>
+      <version>0.5.5</version>
     </dependency>
     <dependency>
       <groupId>net.handle</groupId>
@@ -43,10 +28,19 @@
       <artifactId>commons-cli</artifactId>
       <version>1.2</version>
     </dependency>
+
+
+    <!-- logging -->
     <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.16</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.6.1</version>
+      <scope>runtime</scope>
     </dependency>
 
 
@@ -68,6 +62,7 @@
 
   <build>
     <plugins>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -80,7 +75,6 @@
             </manifest>
           </archive>
         </configuration>
-
       </plugin>
 
       <plugin>
@@ -102,7 +96,32 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
 
+      <plugin> <!-- Compile WSDL into Java classes -->
+        <groupId>org.jvnet.jax-ws-commons</groupId>
+        <artifactId>jaxws-maven-plugin</artifactId>
+        <version>2.1</version>
+        <executions>
+          <execution>
+            <id>orderserver</id>
+            <goals>
+              <goal>wsimport</goal>
+            </goals>
+            <configuration>
+              <wsdlDirectory>src/main/schemas</wsdlDirectory>
+              <wsdlFiles>
+                <wsdlFile>centralwebservice.wsdl</wsdlFile>
+              </wsdlFiles>
+              <sourceDestDir>${project.build.directory}/generated-sources/jaxws</sourceDestDir>
+              <packageName>dk.statsbiblioteket.pidregistration.wsgen.centralwebservice</packageName>
+              <!-- Without this, multiple WSDLs won't be processed -->
+              <staleFile>${project.build.directory}/jaxws/stale/wsdl.centralwebservice.done</staleFile>
+              <target>2.1</target>
+              <verbose>true</verbose>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

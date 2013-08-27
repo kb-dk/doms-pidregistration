@@ -11,7 +11,7 @@ import java.net.URL;
 public class PropertyBasedRegistrarConfigurationTest extends TestCase {
     private PropertyBasedRegistrarConfiguration config
             = new PropertyBasedRegistrarConfiguration(
-            getClass().getResourceAsStream("/handleregistrar.properties"));
+            getClass().getResourceAsStream("/pidregistration.properties"));
 
     public void testGetFedoraLocation() {
         assertEquals("http://alhena:7980/fedora", config.getFedoraLocation());

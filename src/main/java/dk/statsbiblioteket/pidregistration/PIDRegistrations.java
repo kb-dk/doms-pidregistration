@@ -1,12 +1,14 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
-import dk.statsbiblioteket.pidregistration.doms.DOMS;
+import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
-import dk.statsbiblioteket.pidregistration.doms.DOMSQueryBuilder;
+import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
@@ -15,27 +17,28 @@ import java.util.List;
  * Main batch job. Does all the work related to the registration of PIDs in DOMS and in the Global Handle Registry
  */
 public class PIDRegistrations {
-    private final Log log = LogFactory.getLog(getClass());
-
-    private static final int DOMS_QUERY_PAGE_SIZE = 100;
+    private static final Logger log = LoggerFactory.getLogger(PIDRegistrations.class);
 
     private int success = 0;
-    private int noWorkDone = 0;
     private int failure = 0;
 
     private PropertyBasedRegistrarConfiguration configuration;
-    private DOMS doms;
     private GlobalHandleRegistry handleRegistry;
-    private Date fromInclusive;
+
+    private DOMSMetadataQueryer domsMetadataQueryer;
+    private DOMSObjectQueryer domsObjectQueryer;
+    private DOMSUpdater domsUpdater;
 
     public PIDRegistrations(PropertyBasedRegistrarConfiguration configuration,
-                            DOMS doms,
+                            DOMSClient domsClient,
                             GlobalHandleRegistry handleRegistry,
                             Date fromInclusive) {
         this.configuration = configuration;
-        this.doms = doms;
         this.handleRegistry = handleRegistry;
-        this.fromInclusive = fromInclusive;
+
+        domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
+        domsObjectQueryer = new DOMSObjectQueryer(domsClient, fromInclusive);
+        domsUpdater = new DOMSUpdater(domsClient);
     }
 
     /**
@@ -51,24 +54,17 @@ public class PIDRegistrations {
             switch (collection) {
                 case DOMS_RADIO_TV:
                 case DOMS_REKLAMEFILM:
-                    DOMSQueryBuilder queryBuilder = new DOMSQueryBuilder(collection,
-                                                                         fromInclusive,
-                                                                         DOMS_QUERY_PAGE_SIZE);
-                    boolean done = false;
-                    while (!done) {
-                        List<String> objectIds = doms.findObjectsFromQuery(queryBuilder.next());
-                        if (objectIds.isEmpty()) {
-                            done = true;
-                        } else {
-                            handleObjects(collection, objectIds);
-                        }
+                    List<String> objectIds = domsObjectQueryer.findNextIn(collection);
+                    while (!objectIds.isEmpty()) {
+                        handleObjects(collection, objectIds);
+                        objectIds = domsObjectQueryer.findNextIn(collection);
                     }
                     break;
                 default:
                     throw new UnknownCollectionException("Unknown collection: " + collection);
             }
         }
-        String message = String.format("Done adding handles. #success: %s #noWorkDone: %s #failure: %s", success, noWorkDone, failure);
+        String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
         log.info(message);
     }
 
@@ -76,13 +72,13 @@ public class PIDRegistrations {
         for (String objectId : objectIds) {
             try {
                 log.debug(String.format("Handling object ID '%s'", objectId));
-                DOMSMetadata metadata = doms.getMetadataForObject(objectId);
+                DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
                 PIDHandle handle = buildHandle(objectId);
                 boolean domsChanged = false;
                 if (!metadata.handleExists(handle)) {
                     log.debug(String.format("Attaching PID handle '%s' to object ID '%s'", handle, objectId));
                     metadata.attachHandle(handle);
-                    doms.updateMetadataForObject(objectId, metadata);
+                    domsUpdater.update(objectId, metadata);
                     domsChanged = true;
                 } else {
                     log.debug(String.format(
@@ -95,13 +91,10 @@ public class PIDRegistrations {
 
                 if (domsChanged || handleRegistryChanged) {
                     success++;
-                } else {
-                    noWorkDone++;
                 }
             } catch (Exception e) {
                 failure++;
                 log.error(String.format("Error handling object ID '%s'", objectId), e);
-
             }
         }
     }
