@@ -27,10 +27,9 @@
         <fileSet>
             <includes>
                 <include>release-history</include>
+                <include>LICENSE</include>
             </includes>
         </fileSet>
     </fileSets>
-
-
 </assembly>
 
