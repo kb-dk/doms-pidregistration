@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  */
-public class DOMSObjectQueryer {
+public class DOMSObjectIDQueryer {
 
     private static final int MAX_DOMS_RESULT_SIZE = 10000;
 
@@ -22,7 +22,7 @@ public class DOMSObjectQueryer {
     private DOMSClient domsClient;
     private Map<Collection, Long> collectionTimestamps = new HashMap<Collection, Long>();
 
-    public DOMSObjectQueryer(DOMSClient domsClient, Date fromInclusive) {
+    public DOMSObjectIDQueryer(DOMSClient domsClient, Date fromInclusive) {
         this.domsClient = domsClient;
         this.fromInclusive = fromInclusive;
     }

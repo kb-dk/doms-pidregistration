@@ -64,8 +64,7 @@ public class GlobalHandleRegistry {
      */
     public boolean registerPid(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
-        log.info("Registering handle '" + handle + "' for url '" + url + "' in global handle registry" +
-                         "");
+        log.info("Registering handle '" + handle + "' for url '" + url + "' in global handle registry");
         HandleValue[] values = lookupHandle(handle);
 
         if (values == null) {

@@ -4,7 +4,7 @@ import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarC
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
-import dk.statsbiblioteket.pidregistration.doms.DOMSObjectQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
 import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ public class PIDRegistrations {
     private GlobalHandleRegistry handleRegistry;
 
     private DOMSMetadataQueryer domsMetadataQueryer;
-    private DOMSObjectQueryer domsObjectQueryer;
+    private DOMSObjectIDQueryer domsObjectIdQueryer;
     private DOMSUpdater domsUpdater;
 
     public PIDRegistrations(PropertyBasedRegistrarConfiguration configuration,
@@ -37,7 +37,7 @@ public class PIDRegistrations {
         this.handleRegistry = handleRegistry;
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
-        domsObjectQueryer = new DOMSObjectQueryer(domsClient, fromInclusive);
+        domsObjectIdQueryer = new DOMSObjectIDQueryer(domsClient, fromInclusive);
         domsUpdater = new DOMSUpdater(domsClient);
     }
 
@@ -54,10 +54,10 @@ public class PIDRegistrations {
             switch (collection) {
                 case DOMS_RADIO_TV:
                 case DOMS_REKLAMEFILM:
-                    List<String> objectIds = domsObjectQueryer.findNextIn(collection);
+                    List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
                     while (!objectIds.isEmpty()) {
                         handleObjects(collection, objectIds);
-                        objectIds = domsObjectQueryer.findNextIn(collection);
+                        objectIds = domsObjectIdQueryer.findNextIn(collection);
                     }
                     break;
                 default:
@@ -72,22 +72,9 @@ public class PIDRegistrations {
         for (String objectId : objectIds) {
             try {
                 log.info(String.format("Handling object ID '%s'", objectId));
-                DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
-                PIDHandle handle = buildHandle(objectId);
-                boolean domsChanged = false;
-                if (!metadata.handleExists(handle)) {
-                    log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", handle, objectId));
-                    metadata.attachHandle(handle);
-                    domsUpdater.update(objectId, metadata);
-                    domsChanged = true;
-                } else {
-                    log.info(String.format(
-                            "PID handle '%s' already attached to object ID '%s'. Not added to DOMS", handle, objectId
-                    ));
-                }
-
-                log.info(String.format("Attaching PID handle '%s' in global registry", handle));
-                boolean handleRegistryChanged = handleRegistry.registerPid(handle, buildUrl(collection, handle));
+                PIDHandle pidHandle = buildHandle(objectId);
+                boolean domsChanged = updateDoms(pidHandle);
+                boolean handleRegistryChanged = handleRegistry.registerPid(pidHandle, buildUrl(collection, pidHandle));
 
                 if (domsChanged || handleRegistryChanged) {
                     success++;
@@ -101,6 +88,23 @@ public class PIDRegistrations {
 
     private PIDHandle buildHandle(String objectId) {
         return new PIDHandle(configuration.getHandlePrefix(), objectId);
+    }
+
+    private boolean updateDoms(PIDHandle pidHandle) {
+        String objectId = pidHandle.getId();
+        DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
+        boolean domsChanged = false;
+        if (!metadata.handleExists(pidHandle)) {
+            log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
+            metadata.attachHandle(pidHandle);
+            domsUpdater.update(objectId, metadata);
+            domsChanged = true;
+        } else {
+            log.info(String.format(
+                    "PID handle '%s' already attached to object ID '%s'. Not added to DOMS", pidHandle, objectId
+            ));
+        }
+        return domsChanged;
     }
 
     private String buildUrl(Collection collection, PIDHandle handle) {

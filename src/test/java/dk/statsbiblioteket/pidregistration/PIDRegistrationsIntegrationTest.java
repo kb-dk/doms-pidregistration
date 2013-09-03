@@ -4,13 +4,12 @@ import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarC
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
-import dk.statsbiblioteket.pidregistration.doms.DOMSObjectQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
 import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyException;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyLoader;
 import dk.statsbiblioteket.util.xml.DOM;
-import mockit.Expectations;
 import mockit.Mocked;
 import mockit.NonStrictExpectations;
 import net.handle.hdllib.DeleteHandleRequest;
@@ -48,7 +47,7 @@ public class PIDRegistrationsIntegrationTest {
             PIDRegistrationsIntegrationTest.class.getResourceAsStream("/pidregistration.properties"));
 
     @Mocked
-    private DOMSObjectQueryer domsObjectQueryer = null;
+    private DOMSObjectIDQueryer domsObjectIdQueryer = null;
 
     private DOMSClient domsClient = new DOMSClient(CONFIG);
     private DOMSMetadataQueryer domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
@@ -67,10 +66,10 @@ public class PIDRegistrationsIntegrationTest {
     public void testRegistrations() throws TransformerException, HandleException {
         new NonStrictExpectations() {{
 
-            domsObjectQueryer.findNextIn(Collection.DOMS_RADIO_TV);
+            domsObjectIdQueryer.findNextIn(Collection.DOMS_RADIO_TV);
             returns(TV_IDS_UNDER_TEST, new ArrayList<String>());
 
-            domsObjectQueryer.findNextIn(Collection.DOMS_REKLAMEFILM);
+            domsObjectIdQueryer.findNextIn(Collection.DOMS_REKLAMEFILM);
             returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
         }};
 
