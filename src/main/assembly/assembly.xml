@@ -26,9 +26,7 @@
         </fileSet>
         <fileSet>
             <includes>
-                <include>NOTICE.txt</include>
-                <include>LICENSE.txt</include>
-                <include>README.txt</include>
+                <include>release-history</include>
             </includes>
         </fileSet>
     </fileSets>
