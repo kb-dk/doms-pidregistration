@@ -71,22 +71,22 @@ public class PIDRegistrations {
     private void handleObjects(Collection collection, List<String> objectIds) {
         for (String objectId : objectIds) {
             try {
-                log.debug(String.format("Handling object ID '%s'", objectId));
+                log.info(String.format("Handling object ID '%s'", objectId));
                 DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
                 PIDHandle handle = buildHandle(objectId);
                 boolean domsChanged = false;
                 if (!metadata.handleExists(handle)) {
-                    log.debug(String.format("Attaching PID handle '%s' to object ID '%s'", handle, objectId));
+                    log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", handle, objectId));
                     metadata.attachHandle(handle);
                     domsUpdater.update(objectId, metadata);
                     domsChanged = true;
                 } else {
-                    log.debug(String.format(
+                    log.info(String.format(
                             "PID handle '%s' already attached to object ID '%s'. Not added to DOMS", handle, objectId
                     ));
                 }
 
-                log.debug(String.format("Attaching PID handle '%s' in global registry", handle));
+                log.info(String.format("Attaching PID handle '%s' in global registry", handle));
                 boolean handleRegistryChanged = handleRegistry.registerPid(handle, buildUrl(collection, handle));
 
                 if (domsChanged || handleRegistryChanged) {

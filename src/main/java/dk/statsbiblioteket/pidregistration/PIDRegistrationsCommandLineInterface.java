@@ -33,15 +33,12 @@ public class PIDRegistrationsCommandLineInterface {
                 System.exit(1);
             }
 
-            String configFile = line.hasOption("c") ? line.getOptionValue("c") : System.getProperty("user.home");
-
-            log.info("Config file: " + configFile);
-            log.info("From: " + line.getOptionValue("d"));
+            log.info("Registrating from date: " + line.getOptionValue("d"));
 
             Date fromInclusive = YEAR_MONTH_DAY.parse(line.getOptionValue("d"));
 
             PropertyBasedRegistrarConfiguration config = new PropertyBasedRegistrarConfiguration(
-                    new File(configFile));
+                    new File(System.getProperty("user.home"), "pidregistration.properties"));
 
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
@@ -52,7 +49,8 @@ public class PIDRegistrationsCommandLineInterface {
             pidRegistrations.doRegistrations();
         } catch (Exception e) {
             System.err.println("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            log.error(e.getMessage());
+            e.printStackTrace();
+            log.error("Error: {}", e);
             System.exit(2);
         }
     }
@@ -68,14 +66,11 @@ public class PIDRegistrationsCommandLineInterface {
     public static CommandLine parseOptions(String[] args) {
         CommandLine line;
         Option help = new Option("h", "help", false, "Print this message");
-        Option configFileOption = new Option("c", "config-file", true,
-                                             "Configuration file. Default is $HOME");
         Option dateOption = new Option("d", "date", true,
                                        "the date (YYYY-MM-DD) to query from (inclusive)");
         dateOption.setRequired(true);
         Options options = new Options();
         options.addOption(help);
-        options.addOption(configFileOption);
         options.addOption(dateOption);
 
         CommandLineParser parser = new PosixParser();

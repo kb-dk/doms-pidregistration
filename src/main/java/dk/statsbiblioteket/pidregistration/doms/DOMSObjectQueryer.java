@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class DOMSObjectQueryer {
 
-    private static final int MAX_DOMS_RESULT_SIZE = 1000;
+    private static final int MAX_DOMS_RESULT_SIZE = 10000;
 
     private Date fromInclusive;
     private DOMSClient domsClient;
@@ -30,8 +30,8 @@ public class DOMSObjectQueryer {
     public List<String> findNextIn(Collection collection) {
         try {
             List<String> result = new ArrayList<String>();
-            if (collectionTimestamps.containsKey(collection)) {
-                collectionTimestamps.put(collection, fromInclusive.getTime() - 1);
+            if (!collectionTimestamps.containsKey(collection)) {
+                collectionTimestamps.put(collection, fromInclusive.getTime() == 0 ? 0 : fromInclusive.getTime() - 1);
             }
 
             long lastTimestamp = collectionTimestamps.get(collection);
