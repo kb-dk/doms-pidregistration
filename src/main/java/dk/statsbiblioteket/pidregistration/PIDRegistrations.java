@@ -43,25 +43,20 @@ public class PIDRegistrations {
 
     /**
      * 1. For each collection query the DOMS for object IDs after the last modified data in the specific collection
-     *
+     * <p/>
      * 2. For each object ID,
-     *   2a. (DOMS) Check if a handle is attached to the object. If not, build and attach it
-     *   2b. (Global Handle Registry) Check if a (handle -> URL) pair exists in the global handle registry. If not,
-     *       build and attach it.
+     * 2a. (DOMS) Check if a handle is attached to the object. If not, build and attach it
+     * 2b. (Global Handle Registry) Check if a (handle -> URL) pair exists in the global handle registry. If not,
+     * build and attach it.
      */
     public void doRegistrations() {
-        for (Collection collection : Collection.values()) {
-            switch (collection) {
-                case DOMS_RADIO_TV:
-                case DOMS_REKLAMEFILM:
-                    List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
-                    while (!objectIds.isEmpty()) {
-                        handleObjects(collection, objectIds);
-                        objectIds = domsObjectIdQueryer.findNextIn(collection);
-                    }
-                    break;
-                default:
-                    throw new UnknownCollectionException("Unknown collection: " + collection);
+        List<Collection> collections = configuration.getDomsCollections();
+
+        for (Collection collection : collections) {
+            List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
+            while (!objectIds.isEmpty()) {
+                handleObjects(collection, objectIds);
+                objectIds = domsObjectIdQueryer.findNextIn(collection);
             }
         }
         String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
@@ -108,6 +103,6 @@ public class PIDRegistrations {
     }
 
     private String buildUrl(Collection collection, PIDHandle handle) {
-        return String.format("%s/%s/%s", configuration.getPidResolverPrefix(), collection.getId(), handle.asString());
+        return String.format("%s/%s/%s", configuration.getPidPrefix(), collection.getId(), handle.getId());
     }
 }

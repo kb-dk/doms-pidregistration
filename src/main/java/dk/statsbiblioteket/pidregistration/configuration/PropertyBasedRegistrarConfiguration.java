@@ -1,5 +1,8 @@
 package dk.statsbiblioteket.pidregistration.configuration;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import dk.statsbiblioteket.pidregistration.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,8 +11,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -26,7 +32,9 @@ public class PropertyBasedRegistrarConfiguration {
     public static final String HANDLE_PREFIX_KEY = "pidregistration.handlePrefix";
     public static final String PRIVATE_KEY_PATH = "pidregistration.privateKeyPath";
     public static final String PRIVATE_KEY_PASSWORD = "pidregistration.privateKeyPassword";
-    public static final String PID_RESOLVER_PREFIX = "pidregistration.pidResolverPrefix";
+    public static final String PID_PREFIX = "pidregistration.pidPrefix";
+    public static final String DOMS_MAX_RESULT_SIZE = "pidregistration.doms.maxResultSize";
+    public static final String DOMS_COLLECTIONS = "pidregistration.doms.collections";
 
     public PropertyBasedRegistrarConfiguration(File propertiesFile) {
         try {
@@ -83,7 +91,25 @@ public class PropertyBasedRegistrarConfiguration {
         return properties.getProperty(PRIVATE_KEY_PASSWORD);
     }
 
-    public String getPidResolverPrefix() {
-        return properties.getProperty(PID_RESOLVER_PREFIX);
+    public String getPidPrefix() {
+        return properties.getProperty(PID_PREFIX);
+    }
+
+    public int getDomsMaxResultSize() {
+        return Integer.parseInt(properties.getProperty(DOMS_MAX_RESULT_SIZE));
+    }
+
+    public List<Collection> getDomsCollections() {
+        List<Collection> result = new ArrayList<Collection>();
+
+        Type listType = new TypeToken<List<String>>(){}.getType();
+        Gson gson = new Gson();
+        String collections = properties.getProperty(DOMS_COLLECTIONS);
+        List<String> collectionNames = gson.fromJson(collections, listType);
+        for (String collectionName : collectionNames) {
+            result.add(new Collection(collectionName));
+        }
+
+        return result;
     }
 }

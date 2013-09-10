@@ -5,6 +5,7 @@ import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.CentralWebser
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.InvalidCredentialsException;
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.MethodFailedException;
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.RecordDescription;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.xml.namespace.QName;
@@ -13,10 +14,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+@Ignore
 public class CentralWebserviceTest {
 
     private static final QName CENTRAL_WEBSERVICE_SERVICE = new QName(

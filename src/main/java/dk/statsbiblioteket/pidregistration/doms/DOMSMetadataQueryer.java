@@ -10,8 +10,7 @@ public class DOMSMetadataQueryer {
 
     public DOMSMetadata getMetadataForObject(String objectId) {
         try {
-            String dataStream =
-                    domsClient.getCentralWebservice().getDatastreamContents(objectId, domsClient.getDatastreamId());
+            String dataStream = domsClient.getDatastreamContents(objectId);
             return new DOMSMetadata(dataStream);
         } catch (Exception serverOperationFailed) {
             throw new BackendMethodFailedException(

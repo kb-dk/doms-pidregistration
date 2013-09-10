@@ -9,9 +9,9 @@ import net.handle.hdllib.HandleValue;
 import org.junit.Test;
 
 public class GlobalHandleRegistryTest {
-    private static final PIDHandle PID = new PIDHandle("109.3.1", "uuid:A663d0baa-c08f-4b6e-bd07-35ec0b382ebb");
+    private static final PIDHandle PID = new PIDHandle("109.3.1", "uuid:663d0baa-c08f-4b6e-bd07-35ec0b382ebb");
     private static final String URL
-            = "pid.statsbiblioteket.dk/pidresolver/doms_radioTVCollection/uuid%3A663d0baa-c08f-4b6e-bd07-35ec0b382ebb";
+            = "pid.statsbiblioteket.dk/doms_radioTVCollection/uuid:663d0baa-c08f-4b6e-bd07-35ec0b382ebb";
 
     private PropertyBasedRegistrarConfiguration config
             = new PropertyBasedRegistrarConfiguration(

@@ -121,6 +121,18 @@ public class GlobalHandleRegistry {
         processRequest(request);
     }
 
+    private void addUrlToPid(PIDHandle handle, String url)
+            throws RegisteringPidFailedException {
+        AbstractRequest request = handleRequestBuilder.buildAddUrlRequest(handle, url);
+        processRequest(request);
+    }
+
+    private void replaceUrlOfPid(PIDHandle handle, String url)
+            throws RegisteringPidFailedException {
+        AbstractRequest request = handleRequestBuilder.buildModifyUrlRequest(handle, url);
+        processRequest(request);
+    }
+
     private void processRequest(AbstractRequest request) {
         try {
             HandleResolver resolver = new HandleResolver();
@@ -134,17 +146,5 @@ public class GlobalHandleRegistry {
                     "Could not process the request to register a handle at the server.",
                     e);
         }
-    }
-
-    private void addUrlToPid(PIDHandle handle, String url)
-            throws RegisteringPidFailedException {
-        AbstractRequest request = handleRequestBuilder.buildAddUrlRequest(handle, url);
-        processRequest(request);
-    }
-
-    private void replaceUrlOfPid(PIDHandle handle, String url)
-            throws RegisteringPidFailedException {
-        AbstractRequest request = handleRequestBuilder.buildModifyUrlRequest(handle, url);
-        processRequest(request);
     }
 }

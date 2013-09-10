@@ -17,6 +17,7 @@ import net.handle.hdllib.HandleException;
 import net.handle.hdllib.HandleResolver;
 import net.handle.hdllib.PublicKeyAuthenticationInfo;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.xml.transform.TransformerException;
@@ -39,6 +40,7 @@ import static org.junit.Assert.fail;
  * NOTE: This test will _only_ work if the fedora mentioned in the test
  * config is available and contains the expected data.
  */
+@Ignore
 public class PIDRegistrationsIntegrationTest {
 
 
@@ -54,10 +56,12 @@ public class PIDRegistrationsIntegrationTest {
     private DOMSUpdater domsUpdater = new DOMSUpdater(domsClient);
     private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG);
 
+    private static final String REKLAME_DOMS_COLLECTION = "doms:Collection_Reklamefilm";
     private static final List<String> REKLAME_IDS_UNDER_TEST =
             Arrays.asList("uuid:bff36b9a-a38e-4cf8-a03a-efe6c7a58f4a",
                           "uuid:4e8a6e1f-b5d1-4e38-8ce8-15c49ce6ca13");
 
+    private static final String TV_DOMS_COLLECTION = "doms:RadioTV_Collection";
     private static final List<String> TV_IDS_UNDER_TEST =
             Arrays.asList("uuid:001fdf2b-a05a-40de-a43b-787f1ba9041f",
                           "uuid:0019f31d-b6f7-4ef2-81f6-89b116c64272");
@@ -66,10 +70,10 @@ public class PIDRegistrationsIntegrationTest {
     public void testRegistrations() throws TransformerException, HandleException {
         new NonStrictExpectations() {{
 
-            domsObjectIdQueryer.findNextIn(Collection.DOMS_RADIO_TV);
+            domsObjectIdQueryer.findNextIn(new Collection(TV_DOMS_COLLECTION));
             returns(TV_IDS_UNDER_TEST, new ArrayList<String>());
 
-            domsObjectIdQueryer.findNextIn(Collection.DOMS_REKLAMEFILM);
+            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_DOMS_COLLECTION));
             returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
         }};
 

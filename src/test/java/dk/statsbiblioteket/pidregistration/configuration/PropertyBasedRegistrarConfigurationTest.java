@@ -1,9 +1,11 @@
 package dk.statsbiblioteket.pidregistration.configuration;
 
+import dk.statsbiblioteket.pidregistration.Collection;
 import junit.framework.TestCase;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 
 /**
  * Test properties load as expected.
@@ -43,7 +45,18 @@ public class PropertyBasedRegistrarConfigurationTest extends TestCase {
         assertEquals("", config.getPrivateKeyPassword());
     }
 
-    public void testGetPidResolverPrefix() {
-        assertEquals("http://pid.statsbiblioteket.dk/pidresolver", config.getPidResolverPrefix());
+    public void testGetPidPrefix() {
+        assertEquals("http://bitfinder.statsbiblioteket.dk", config.getPidPrefix());
+    }
+
+    public void testGetDomsMaxResultSize() {
+        assertEquals(10000, config.getDomsMaxResultSize());
+    }
+
+    public void testGetDomsCollections() {
+        assertEquals(
+                Arrays.asList(new Collection("doms:RadioTV_Collection"), new Collection("doms:Collection_Reklamefilm")),
+                config.getDomsCollections()
+        );
     }
 }
