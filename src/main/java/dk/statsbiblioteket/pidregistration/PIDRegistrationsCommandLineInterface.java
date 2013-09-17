@@ -70,8 +70,8 @@ public class PIDRegistrationsCommandLineInterface {
                                        "the date (YYYY-MM-DD) to query from (inclusive)");
         dateOption.setRequired(true);
         Options options = new Options();
-        options.addOption(help);
         options.addOption(dateOption);
+        options.addOption(help);
 
         CommandLineParser parser = new PosixParser();
         try {

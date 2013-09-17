@@ -6,6 +6,8 @@ import junit.framework.TestCase;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Test properties load as expected.
@@ -54,9 +56,9 @@ public class PropertyBasedRegistrarConfigurationTest extends TestCase {
     }
 
     public void testGetDomsCollections() {
-        assertEquals(
-                Arrays.asList(new Collection("doms:RadioTV_Collection"), new Collection("doms:Collection_Reklamefilm")),
-                config.getDomsCollections()
-        );
+        Set<Collection> expectedSet = new HashSet<Collection>();
+        expectedSet.add(new Collection("radiotv", "doms:RadioTV_Collection"));
+        expectedSet.add(new Collection("reklamefilm", "doms:Collection_Reklamefilm"));
+        assertEquals(expectedSet, config.getDomsCollections());
     }
 }

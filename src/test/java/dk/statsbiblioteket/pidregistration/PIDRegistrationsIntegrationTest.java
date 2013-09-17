@@ -56,11 +56,13 @@ public class PIDRegistrationsIntegrationTest {
     private DOMSUpdater domsUpdater = new DOMSUpdater(domsClient);
     private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG);
 
+    private static final String REKLAME_ID = "reklamefilm";
     private static final String REKLAME_DOMS_COLLECTION = "doms:Collection_Reklamefilm";
     private static final List<String> REKLAME_IDS_UNDER_TEST =
             Arrays.asList("uuid:bff36b9a-a38e-4cf8-a03a-efe6c7a58f4a",
                           "uuid:4e8a6e1f-b5d1-4e38-8ce8-15c49ce6ca13");
 
+    private static final String TV_ID = "radiotv";
     private static final String TV_DOMS_COLLECTION = "doms:RadioTV_Collection";
     private static final List<String> TV_IDS_UNDER_TEST =
             Arrays.asList("uuid:001fdf2b-a05a-40de-a43b-787f1ba9041f",
@@ -70,10 +72,10 @@ public class PIDRegistrationsIntegrationTest {
     public void testRegistrations() throws TransformerException, HandleException {
         new NonStrictExpectations() {{
 
-            domsObjectIdQueryer.findNextIn(new Collection(TV_DOMS_COLLECTION));
+            domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION));
             returns(TV_IDS_UNDER_TEST, new ArrayList<String>());
 
-            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_DOMS_COLLECTION));
+            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION));
             returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
         }};
 

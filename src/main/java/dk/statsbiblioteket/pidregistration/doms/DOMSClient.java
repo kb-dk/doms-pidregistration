@@ -46,7 +46,7 @@ public class DOMSClient {
 
     public List<RecordDescription> getIDsModified(long sinceExclusive, Collection collection) throws InvalidCredentialsException, MethodFailedException {
         return getCentralWebservice().getIDsModified(
-                sinceExclusive, collection.getId(), "SummaVisible", "Published", 0, maxDomsResultSize);
+                sinceExclusive, collection.getDomsName(), "SummaVisible", "Published", 0, maxDomsResultSize);
     }
 
     public void markInProgressObject(String objectId) throws MethodFailedException, InvalidResourceException, InvalidCredentialsException {

@@ -1,7 +1,5 @@
 package dk.statsbiblioteket.pidregistration.configuration;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import dk.statsbiblioteket.pidregistration.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +9,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Configuration read by property file.
@@ -34,7 +31,7 @@ public class PropertyBasedRegistrarConfiguration {
     public static final String PRIVATE_KEY_PASSWORD = "pidregistration.privateKeyPassword";
     public static final String PID_PREFIX = "pidregistration.pidPrefix";
     public static final String DOMS_MAX_RESULT_SIZE = "pidregistration.doms.maxResultSize";
-    public static final String DOMS_COLLECTIONS = "pidregistration.doms.collections";
+    public static final String DOMS_COLLECTIONS_PREFIX = "pidregistration.doms.collections.";
 
     public PropertyBasedRegistrarConfiguration(File propertiesFile) {
         try {
@@ -99,17 +96,16 @@ public class PropertyBasedRegistrarConfiguration {
         return Integer.parseInt(properties.getProperty(DOMS_MAX_RESULT_SIZE));
     }
 
-    public List<Collection> getDomsCollections() {
-        List<Collection> result = new ArrayList<Collection>();
+    public Set<Collection> getDomsCollections() {
+        Set<Collection> result = new HashSet<Collection>();
 
-        Type listType = new TypeToken<List<String>>(){}.getType();
-        Gson gson = new Gson();
-        String collections = properties.getProperty(DOMS_COLLECTIONS);
-        List<String> collectionNames = gson.fromJson(collections, listType);
-        for (String collectionName : collectionNames) {
-            result.add(new Collection(collectionName));
+        for (String propertyName : properties.stringPropertyNames()) {
+            if (propertyName.startsWith(DOMS_COLLECTIONS_PREFIX)) {
+                String id = propertyName.substring(DOMS_COLLECTIONS_PREFIX.length(), propertyName.length());
+                String domsCollection = properties.getProperty(propertyName);
+                result.add(new Collection(id, domsCollection));
+            }
         }
-
         return result;
     }
 }

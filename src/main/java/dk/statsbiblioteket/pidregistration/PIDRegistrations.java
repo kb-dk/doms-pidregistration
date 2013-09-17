@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Main batch job. Does all the work related to the registration of PIDs in DOMS and in the Global Handle Registry
@@ -50,7 +51,7 @@ public class PIDRegistrations {
      * build and attach it.
      */
     public void doRegistrations() {
-        List<Collection> collections = configuration.getDomsCollections();
+        Set<Collection> collections = configuration.getDomsCollections();
 
         for (Collection collection : collections) {
             List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
@@ -90,7 +91,7 @@ public class PIDRegistrations {
         DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
         boolean domsChanged = false;
         if (!metadata.handleExists(pidHandle)) {
-            log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
+            log.info(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
             metadata.attachHandle(pidHandle);
             domsUpdater.update(objectId, metadata);
             domsChanged = true;
