@@ -135,12 +135,17 @@ public class GlobalHandleRegistry {
 
     private void processRequest(AbstractRequest request) {
         try {
+            long start = System.currentTimeMillis();
             HandleResolver resolver = new HandleResolver();
             AbstractResponse response = resolver.processRequest(request);
             if (response.responseCode != AbstractMessage.RC_SUCCESS) {
                 throw new RegisteringPidFailedException(
                         "Failed trying to register a handle at the server, response was" + response);
             }
+            long end = System.currentTimeMillis();
+
+            log.debug("processing handle request (" + request.getClass().getName() + ") took " + (end - start) + " ms.");
+
         } catch (HandleException e) {
             throw new RegisteringPidFailedException(
                     "Could not process the request to register a handle at the server.",

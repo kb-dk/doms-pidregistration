@@ -1,6 +1,9 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
+import dk.statsbiblioteket.pidregistration.database.dao.JobDAO;
+import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
@@ -10,6 +13,9 @@ import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +35,8 @@ public class PIDRegistrations {
     private DOMSMetadataQueryer domsMetadataQueryer;
     private DOMSObjectIDQueryer domsObjectIdQueryer;
     private DOMSUpdater domsUpdater;
+    private Connection connection;
+    private JobDAO jobDao;
 
     public PIDRegistrations(PropertyBasedRegistrarConfiguration configuration,
                             DOMSClient domsClient,
@@ -40,6 +48,9 @@ public class PIDRegistrations {
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
         domsObjectIdQueryer = new DOMSObjectIDQueryer(domsClient, fromInclusive);
         domsUpdater = new DOMSUpdater(domsClient);
+
+        connection = new ConnectionFactory().createConnection();
+        jobDao = new JobDAO(configuration, connection);
     }
 
     /**
@@ -53,32 +64,94 @@ public class PIDRegistrations {
     public void doRegistrations() {
         Set<Collection> collections = configuration.getDomsCollections();
 
+        log.info("Adding jobs to database");
         for (Collection collection : collections) {
             List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
             while (!objectIds.isEmpty()) {
-                handleObjects(collection, objectIds);
+
+                beginTransaction();
+                persistObjects(collection, objectIds);
+                commitTransaction();
                 objectIds = domsObjectIdQueryer.findNextIn(collection);
             }
         }
+        log.info("Done adding jobs");
+        log.info("Adding handles");
+        JobDTO jobDto;
+        while((jobDto = jobDao.findPendingJob()) != null) {
+            handleObject(jobDto);
+        }
+
         String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
         log.info(message);
+        closeConnection();
     }
 
-    private void handleObjects(Collection collection, List<String> objectIds) {
-        for (String objectId : objectIds) {
-            try {
-                log.info(String.format("Handling object ID '%s'", objectId));
-                PIDHandle pidHandle = buildHandle(objectId);
-                boolean domsChanged = updateDoms(pidHandle);
-                boolean handleRegistryChanged = handleRegistry.registerPid(pidHandle, buildUrl(collection, pidHandle));
+    private void beginTransaction() {
+        try {
+            connection.setAutoCommit(false);
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-                if (domsChanged || handleRegistryChanged) {
-                    success++;
-                }
-            } catch (Exception e) {
-                failure++;
-                log.error(String.format("Error handling object ID '%s'", objectId), e);
+    private void commitTransaction() {
+        try {
+            connection.commit();
+            connection.setAutoCommit(true);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException e1) {
+                throw new RuntimeException(e);
             }
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void closeConnection() {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void persistObjects(Collection collection, List<String> objectIds) {
+        List<JobDTO> jobDtos = new ArrayList<JobDTO>();
+        for (String objectId : objectIds) {
+            if (jobDao.findJobWithUUID(objectId) != null) {
+                log.info("Job with UUID " + objectId + " already exists in job list. Ignoring");
+            } else {
+                jobDtos.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
+            }
+        }
+
+        jobDao.save(jobDtos);
+    }
+
+
+    private void handleObject(JobDTO jobDto) {
+        try {
+            log.info(String.format("Handling object ID '%s'", jobDto.getUuid()));
+            PIDHandle pidHandle = buildHandle(jobDto.getUuid());
+            boolean domsChanged = updateDoms(pidHandle);
+            boolean handleRegistryChanged = handleRegistry.registerPid(
+                    pidHandle,
+                    buildUrl(jobDto.getCollection(), pidHandle)
+            );
+
+            if (domsChanged || handleRegistryChanged) {
+                success++;
+                jobDto.setState(JobDTO.State.DONE);
+                jobDao.update(jobDto);
+            }
+        } catch (Exception e) {
+            failure++;
+            jobDto.setState(JobDTO.State.ERROR);
+            jobDao.update(jobDto);
+            log.error(String.format("Error handling object ID '%s'", jobDto.getUuid()), e);
         }
     }
 
