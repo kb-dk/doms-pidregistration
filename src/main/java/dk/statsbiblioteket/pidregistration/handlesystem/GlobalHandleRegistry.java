@@ -28,6 +28,7 @@ public class GlobalHandleRegistry {
     private static final int URL_RECORD_INDEX = 1;
     private final PropertyBasedRegistrarConfiguration config;
 
+    private HandleResolver handleResolver;
     private HandleRequestBuilder handleRequestBuilder;
 
     public GlobalHandleRegistry(PropertyBasedRegistrarConfiguration config) {
@@ -37,13 +38,13 @@ public class GlobalHandleRegistry {
         PublicKeyAuthenticationInfo pubKeyAuthInfo = new PublicKeyAuthenticationInfo(
                 adminId.getBytes(DEFAULT_ENCODING), ADMIN_ID_INDEX, loadPrivateKey());
 
+        handleResolver = new HandleResolver();
         handleRequestBuilder = new HandleRequestBuilder(adminId,
                                             ADMIN_ID_INDEX,
                                             ADMIN_RECORD_INDEX,
                                             URL_RECORD_INDEX,
                                             DEFAULT_ENCODING,
                                             pubKeyAuthInfo);
-
     }
 
     private PrivateKey loadPrivateKey() throws PrivateKeyException {
@@ -92,7 +93,7 @@ public class GlobalHandleRegistry {
 
     private HandleValue[] lookupHandle(PIDHandle handle) {
         try {
-            return new HandleResolver().resolveHandle(handle.asString());
+            return handleResolver.resolveHandle(handle.asString());
         } catch (HandleException e) {
             if (e.getCode() == HandleException.HANDLE_DOES_NOT_EXIST) {
                 return null;
@@ -136,8 +137,7 @@ public class GlobalHandleRegistry {
     private void processRequest(AbstractRequest request) {
         try {
             long start = System.currentTimeMillis();
-            HandleResolver resolver = new HandleResolver();
-            AbstractResponse response = resolver.processRequest(request);
+            AbstractResponse response = handleResolver.processRequest(request);
             if (response.responseCode != AbstractMessage.RC_SUCCESS) {
                 throw new RegisteringPidFailedException(
                         "Failed trying to register a handle at the server, response was" + response);
