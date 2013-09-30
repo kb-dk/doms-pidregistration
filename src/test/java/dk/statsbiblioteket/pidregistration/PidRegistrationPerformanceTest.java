@@ -104,8 +104,16 @@ public class PidRegistrationPerformanceTest {
 
     @After
     public void teardown() throws HandleException, TransformerException {
+        long start = System.currentTimeMillis();
         restoreDoms();
+        long end = System.currentTimeMillis();
+
+        System.out.println("Restoring DOMS took " + (end - start) + " ms");
+
         restoreGlobalHandleRegistry();
+        end = System.currentTimeMillis();
+
+        System.out.println("Restoring handle registry took " + (end - start) + " ms");
     }
 
     private void restoreDoms() throws TransformerException {
