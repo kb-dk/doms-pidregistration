@@ -2,6 +2,7 @@ package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
+import dk.statsbiblioteket.pidregistration.database.DatabaseException;
 import dk.statsbiblioteket.pidregistration.database.dao.JobDAO;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
@@ -92,7 +93,7 @@ public class PIDRegistrations {
             connection.setAutoCommit(false);
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseException(e);
         }
     }
 
@@ -104,9 +105,9 @@ public class PIDRegistrations {
             try {
                 connection.rollback();
             } catch (SQLException e1) {
-                throw new RuntimeException(e);
+                throw new DatabaseException(e);
             }
-            throw new RuntimeException(e);
+            throw new DatabaseException(e);
         }
     }
 
@@ -114,7 +115,7 @@ public class PIDRegistrations {
         try {
             connection.close();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseException(e);
         }
     }
 

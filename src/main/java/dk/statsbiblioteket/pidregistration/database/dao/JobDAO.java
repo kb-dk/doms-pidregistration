@@ -2,6 +2,7 @@ package dk.statsbiblioteket.pidregistration.database.dao;
 
 import dk.statsbiblioteket.pidregistration.Collection;
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.database.DatabaseException;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 
 import java.sql.Connection;
@@ -57,7 +58,7 @@ public class JobDAO {
 
             ps.executeBatch();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseException(e);
         }
     }
 
@@ -80,7 +81,7 @@ public class JobDAO {
 
             ps.executeBatch();
         } catch (SQLException e) {
-            throw new RuntimeException(e.getNextException());
+            throw new DatabaseException(e.getNextException());
         }
     }
 
@@ -88,7 +89,7 @@ public class JobDAO {
         try {
             return connection.prepareStatement(query);
         } catch (SQLException e) {
-            throw new RuntimeException(e.getNextException());
+            throw new DatabaseException(e.getNextException());
         }
     }
 
@@ -114,7 +115,7 @@ public class JobDAO {
             return result;
 
         } catch (SQLException e) {
-            throw new RuntimeException(e.getNextException());
+            throw new DatabaseException(e.getNextException());
         }
     }
 
@@ -134,7 +135,7 @@ public class JobDAO {
             }
             return result;
         } catch (SQLException e) {
-            throw new RuntimeException(e.getNextException());
+            throw new DatabaseException(e.getNextException());
         }
     }
 

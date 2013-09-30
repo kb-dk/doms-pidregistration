@@ -13,9 +13,9 @@ public class ConnectionFactory {
             return DriverManager.getConnection(
                     "jdbc:postgresql://hsm-ubuntu.sb.statsbiblioteket.dk:5432/pid", "pid", "pid");
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseException(e);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseException(e);
         }
     }
 }
