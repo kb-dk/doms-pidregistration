@@ -16,26 +16,27 @@ import java.util.List;
 
 /**
  */
-public class JobDAO {
+public class JobsDAO {
 
     private static final String INSERT_JOB =
-            "INSERT INTO job (uuid, collection, state, last_state_change) VALUES (?, ?, ?::job_state, ?)";
+            "INSERT INTO jobs (uuid, collection, state, created, last_state_change) VALUES (?, ?, ?::job_state, ?, ?)";
 
     private static final String UPDATE_JOB =
-            "UPDATE job SET uuid=?,collection=?,state=?::job_state,last_state_change=? where id=?";
-
+            "UPDATE jobs SET uuid=?,collection=?,state=?::job_state,created=?,last_state_change=? where id=?";
 
     private static final String GET_JOBS_WITH_STATE =
-            "SELECT id, uuid, collection, state, last_state_change FROM job where state=?::job_state limit ?";
+            "SELECT id, uuid, collection, state, created, last_state_change FROM jobs where state=?::job_state limit ?";
 
     private static final String GET_JOBS_WITH_UUID =
-            "SELECT id, uuid, collection, state, last_state_change FROM job where uuid=?";
+            "SELECT id, uuid, collection, state, created, last_state_change FROM jobs where uuid=?";
+
+    private static final String GET_LAST_CREATED = "select max(created) from jobs";
 
     private Connection connection;
     private PropertyBasedRegistrarConfiguration configuration;
 
 
-    public JobDAO(PropertyBasedRegistrarConfiguration configuration, Connection connection) {
+    public JobsDAO(PropertyBasedRegistrarConfiguration configuration, Connection connection) {
         this.configuration = configuration;
         this.connection = connection;
     }
@@ -52,13 +53,14 @@ public class JobDAO {
                 ps.setString(1, jobDto.getUuid());
                 ps.setString(2, jobDto.getCollection().getId());
                 ps.setString(3, jobDto.getState().getDatabaseStateName());
-                ps.setTimestamp(4, new Timestamp(jobDto.getLastStateChange().getTime()));
+                ps.setTimestamp(4, new Timestamp(jobDto.getCreated().getTime()));
+                ps.setTimestamp(5, new Timestamp(jobDto.getLastStateChange().getTime()));
                 ps.addBatch();
             }
 
             ps.executeBatch();
         } catch (SQLException e) {
-            throw new DatabaseException(e);
+            throw new DatabaseException(e.getNextException());
         }
     }
 
@@ -74,8 +76,9 @@ public class JobDAO {
                 ps.setString(1, jobDto.getUuid());
                 ps.setString(2, jobDto.getCollection().getId());
                 ps.setString(3, jobDto.getState().getDatabaseStateName());
-                ps.setTimestamp(4, new Timestamp(jobDto.getLastStateChange().getTime()));
-                ps.setInt(5, jobDto.getId());
+                ps.setTimestamp(4, new Timestamp(jobDto.getCreated().getTime()));
+                ps.setTimestamp(5, new Timestamp(jobDto.getLastStateChange().getTime()));
+                ps.setInt(6, jobDto.getId());
                 ps.addBatch();
             }
 
@@ -93,11 +96,15 @@ public class JobDAO {
         }
     }
 
-    public JobDTO findPendingJob() {
-        return findJobWith(JobDTO.State.PENDING);
+    public JobDTO findJobPending() {
+        return findJob(JobDTO.State.PENDING);
     }
 
-    public JobDTO findJobWith(JobDTO.State state) {
+    public JobDTO findJobError() {
+        return findJob(JobDTO.State.ERROR);
+    }
+
+    public JobDTO findJob(JobDTO.State state) {
         try {
             PreparedStatement ps = buildPreparedStatement(GET_JOBS_WITH_STATE);
             ps.setString(1, state.getDatabaseStateName());
@@ -105,18 +112,24 @@ public class JobDAO {
             ResultSet resultSet = ps.executeQuery();
             JobDTO result = null;
             if (resultSet.next()) {
-                result = new JobDTO();
-                result.setId(resultSet.getInt("id"));
-                result.setCollection(findCollectionWithId(resultSet.getString("collection")));
-                result.setUuid(resultSet.getString("uuid"));
-                result.setState(findStateWithID(resultSet.getString("state")));
-                result.setLastStateChange(new Date(resultSet.getTimestamp("last_state_change").getTime()));
+                result = resultSetToJobDTO(resultSet);
             }
             return result;
 
         } catch (SQLException e) {
             throw new DatabaseException(e.getNextException());
         }
+    }
+
+    private JobDTO resultSetToJobDTO(ResultSet resultSet) throws SQLException {
+        JobDTO result = new JobDTO();
+        result.setId(resultSet.getInt("id"));
+        result.setCollection(findCollectionWithId(resultSet.getString("collection")));
+        result.setUuid(resultSet.getString("uuid"));
+        result.setState(findStateWithID(resultSet.getString("state")));
+        result.setCreated(new Date(resultSet.getTimestamp("created").getTime()));
+        result.setLastStateChange(new Date(resultSet.getTimestamp("last_state_change").getTime()));
+        return result;
     }
 
     public JobDTO findJobWithUUID(String uuid) {
@@ -126,12 +139,7 @@ public class JobDAO {
             ResultSet resultSet = ps.executeQuery();
             JobDTO result = null;
             if (resultSet.next()) {
-                result = new JobDTO();
-                result.setId(resultSet.getInt("id"));
-                result.setCollection(findCollectionWithId(resultSet.getString("collection")));
-                result.setUuid(resultSet.getString("uuid"));
-                result.setState(findStateWithID(resultSet.getString("state")));
-                result.setLastStateChange(new Date(resultSet.getTimestamp("last_state_change").getTime()));
+                result = resultSetToJobDTO(resultSet);
             }
             return result;
         } catch (SQLException e) {
@@ -155,5 +163,19 @@ public class JobDAO {
             }
         }
         return null;
+    }
+
+    public Date getLastJobCreated() {
+        PreparedStatement ps = buildPreparedStatement(GET_LAST_CREATED);
+        try {
+            ResultSet resultSet = ps.executeQuery();
+            Date result = null;
+            if (resultSet.next() && resultSet.getTimestamp("max") != null) {
+                result = new Date(resultSet.getTimestamp("max").getTime());
+            }
+            return result;
+        } catch (SQLException e) {
+            throw new DatabaseException(e.getNextException());
+        }
     }
 }

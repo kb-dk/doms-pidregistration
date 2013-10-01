@@ -17,6 +17,7 @@ import net.handle.hdllib.HandleException;
 import net.handle.hdllib.HandleResolver;
 import net.handle.hdllib.PublicKeyAuthenticationInfo;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -25,8 +26,6 @@ import java.nio.charset.Charset;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +45,7 @@ import static org.junit.Assert.fail;
 public class PIDRegistrationsIntegrationTest {
     private static final PropertyBasedRegistrarConfiguration CONFIG
             = new PropertyBasedRegistrarConfiguration(
-            PIDRegistrationsIntegrationTest.class.getResourceAsStream("/pidregistration.properties"));
+            PIDRegistrationsIntegrationTest.class.getResourceAsStream("/doms-pidregistration.properties"));
 
     @Mocked
     private DOMSObjectIDQueryer domsObjectIdQueryer = null;
@@ -68,6 +67,19 @@ public class PIDRegistrationsIntegrationTest {
     private static final List<String> TV_IDS_UNDER_TEST =
             Arrays.asList("uuid:001fdf2b-a05a-40de-a43b-787f1ba9041f",
                           "uuid:0019f31d-b6f7-4ef2-81f6-89b116c64272");
+    @Before
+    public void setup() throws TransformerException {
+        domsOriginals = new HashMap<String, DOMSMetadata>();
+        List<String> storedContents = new ArrayList<String>(REKLAME_IDS_UNDER_TEST);
+        storedContents.addAll(TV_IDS_UNDER_TEST);
+        for (String objectId : storedContents) {
+            String resourceName = "/" + objectId.subSequence(5, objectId.length()) + ".xml";
+            DOMSMetadata original = new DOMSMetadata(
+                    DOM.domToString(DOM.streamToDOM(getClass().getResourceAsStream(resourceName)))
+            );
+            domsOriginals.put(objectId, original);
+        }
+    }
 
     @Test
     public void testRegistrations() throws TransformerException, HandleException {
@@ -80,7 +92,7 @@ public class PIDRegistrationsIntegrationTest {
             returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
         }};
 
-        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, createTestDate());
+        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry);
 
         List<String> idsToBePutInDoms = new ArrayList<String>();
         idsToBePutInDoms.addAll(REKLAME_IDS_UNDER_TEST);
@@ -92,7 +104,6 @@ public class PIDRegistrationsIntegrationTest {
 
         for (String objectId : idsToBePutInDoms) {
             DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
-            domsOriginals.put(objectId, metadata);
             PIDHandle handle = new PIDHandle(CONFIG.getHandlePrefix(), objectId);
             assertFalse(metadata.handleExists(handle));
 
@@ -120,13 +131,6 @@ public class PIDRegistrationsIntegrationTest {
 
         metadata = domsMetadataQueryer.getMetadataForObject(alreadyModified);
         assertTrue(metadata.handleExists(new PIDHandle(CONFIG.getHandlePrefix(), alreadyModified)));
-    }
-
-    private Date createTestDate() {
-        Calendar january1st2013 = Calendar.getInstance();
-        january1st2013.clear();
-        january1st2013.set(2013, Calendar.JANUARY, 1);
-        return january1st2013.getTime();
     }
 
     @After

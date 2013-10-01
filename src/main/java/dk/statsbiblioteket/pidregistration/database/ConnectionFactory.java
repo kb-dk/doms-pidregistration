@@ -1,5 +1,7 @@
 package dk.statsbiblioteket.pidregistration.database;
 
+import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -7,11 +9,20 @@ import java.sql.SQLException;
 /**
  */
 public class ConnectionFactory {
+    private PropertyBasedRegistrarConfiguration configuration;
+
+    public ConnectionFactory(PropertyBasedRegistrarConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
     public Connection createConnection() {
         try {
             Class.forName("org.postgresql.Driver");
             return DriverManager.getConnection(
-                    "jdbc:postgresql://hsm-ubuntu.sb.statsbiblioteket.dk:5432/pid", "pid", "pid");
+                    configuration.getDatabaseUrl(),
+                    configuration.getDatabaseUsername(),
+                    configuration.getDatabasePassword()
+            );
         } catch (ClassNotFoundException e) {
             throw new DatabaseException(e);
         } catch (SQLException e) {

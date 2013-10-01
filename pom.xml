@@ -7,6 +7,12 @@
   <packaging>jar</packaging>
   <name>pidregistration</name>
 
+  <scm>
+    <connection>scm:git:https://github.com/statsbiblioteket/doms-pidregistration.git</connection>
+    <developerConnection>scm:git:https://github.com/statsbiblioteket/doms-pidregistration.git</developerConnection>
+    <url>https://github.com/statsbiblioteket/doms-pidregistration</url>
+  </scm>
+
   <dependencies>
     <dependency>
       <groupId>dk.statsbiblioteket.sbutil</groupId>

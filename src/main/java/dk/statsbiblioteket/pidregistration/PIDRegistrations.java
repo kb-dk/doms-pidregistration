@@ -3,7 +3,7 @@ package dk.statsbiblioteket.pidregistration;
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
 import dk.statsbiblioteket.pidregistration.database.DatabaseException;
-import dk.statsbiblioteket.pidregistration.database.dao.JobDAO;
+import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
@@ -37,21 +37,25 @@ public class PIDRegistrations {
     private DOMSObjectIDQueryer domsObjectIdQueryer;
     private DOMSUpdater domsUpdater;
     private Connection connection;
-    private JobDAO jobDao;
+    private JobsDAO jobsDao;
 
     public PIDRegistrations(PropertyBasedRegistrarConfiguration configuration,
                             DOMSClient domsClient,
-                            GlobalHandleRegistry handleRegistry,
-                            Date fromInclusive) {
+                            GlobalHandleRegistry handleRegistry) {
         this.configuration = configuration;
         this.handleRegistry = handleRegistry;
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
-        domsObjectIdQueryer = new DOMSObjectIDQueryer(domsClient, fromInclusive);
         domsUpdater = new DOMSUpdater(domsClient);
 
-        connection = new ConnectionFactory().createConnection();
-        jobDao = new JobDAO(configuration, connection);
+        connection = new ConnectionFactory(configuration).createConnection();
+        jobsDao = new JobsDAO(configuration, connection);
+
+        Date lastJobCreated = jobsDao.getLastJobCreated();
+        domsObjectIdQueryer = new DOMSObjectIDQueryer(
+                domsClient,
+                new Date(lastJobCreated == null ? 0 : lastJobCreated.getTime() - 10000)
+        );
     }
 
     /**
@@ -79,7 +83,13 @@ public class PIDRegistrations {
         log.info("Done adding jobs");
         log.info("Adding handles");
         JobDTO jobDto;
-        while((jobDto = jobDao.findPendingJob()) != null) {
+
+        while((jobDto = jobsDao.findJobError()) != null) {
+            jobDto.setState(JobDTO.State.PENDING);
+            jobsDao.update(jobDto);
+        }
+
+        while((jobDto = jobsDao.findJobPending()) != null) {
             handleObject(jobDto);
         }
 
@@ -122,14 +132,14 @@ public class PIDRegistrations {
     private void persistObjects(Collection collection, List<String> objectIds) {
         List<JobDTO> jobDtos = new ArrayList<JobDTO>();
         for (String objectId : objectIds) {
-            if (jobDao.findJobWithUUID(objectId) != null) {
+            if (jobsDao.findJobWithUUID(objectId) != null) {
                 log.info("Job with UUID " + objectId + " already exists in job list. Ignoring");
             } else {
                 jobDtos.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
             }
         }
 
-        jobDao.save(jobDtos);
+        jobsDao.save(jobDtos);
     }
 
 
@@ -145,13 +155,15 @@ public class PIDRegistrations {
 
             if (domsChanged || handleRegistryChanged) {
                 success++;
-                jobDto.setState(JobDTO.State.DONE);
-                jobDao.update(jobDto);
             }
+
+            jobDto.setState(JobDTO.State.DONE);
+            jobsDao.update(jobDto);
         } catch (Exception e) {
             failure++;
+
             jobDto.setState(JobDTO.State.ERROR);
-            jobDao.update(jobDto);
+            jobsDao.update(jobDto);
             log.error(String.format("Error handling object ID '%s'", jobDto.getUuid()), e);
         }
     }

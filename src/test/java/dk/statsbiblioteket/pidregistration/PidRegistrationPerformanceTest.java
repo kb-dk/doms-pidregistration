@@ -37,7 +37,7 @@ public class PidRegistrationPerformanceTest {
 
     private static final PropertyBasedRegistrarConfiguration CONFIG
             = new PropertyBasedRegistrarConfiguration(
-            PIDRegistrationsIntegrationTest.class.getResourceAsStream("/pidregistration.properties"));
+            PIDRegistrationsIntegrationTest.class.getResourceAsStream("/doms-pidregistration.properties"));
 
     @Mocked
     private DOMSObjectIDQueryer domsObjectIdQueryer = null;
@@ -67,7 +67,7 @@ public class PidRegistrationPerformanceTest {
             returns(fetchIds("reklamefilm.txt"), new ArrayList<String>());
         }};
 
-        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, createTestDate());
+        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry);
 
         idsToHandle.addAll(fetchIds("radiotv.txt"));
         idsToHandle.addAll(fetchIds("reklamefilm.txt"));
@@ -93,13 +93,6 @@ public class PidRegistrationPerformanceTest {
         }
         reader.close();
         return result;
-    }
-
-    private Date createTestDate() {
-        Calendar january1st2013 = Calendar.getInstance();
-        january1st2013.clear();
-        january1st2013.set(2013, Calendar.JANUARY, 1);
-        return january1st2013.getTime();
     }
 
     @After

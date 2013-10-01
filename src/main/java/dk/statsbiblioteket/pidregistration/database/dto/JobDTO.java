@@ -27,6 +27,7 @@ public class JobDTO {
     private String uuid;
     private Collection collection;
     private State state;
+    private Date created;
     private Date lastStateChange;
 
     public JobDTO() {
@@ -36,6 +37,8 @@ public class JobDTO {
         this.uuid = uuid;
         this.collection = collection;
         this.state = state;
+        this.created = new Date();
+        this.created = new Date();
         this.lastStateChange = new Date();
     }
 
@@ -70,6 +73,14 @@ public class JobDTO {
     public void setState(State state) {
         this.state = state;
         setLastStateChange(new Date());
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
     public Date getLastStateChange() {

@@ -22,16 +22,19 @@ public class PropertyBasedRegistrarConfiguration {
     private static final Logger log = LoggerFactory.getLogger(PropertyBasedRegistrarConfiguration.class);
 
     private Properties properties;
-    public static final String FEDORA_LOCATION_KEY = "pidregistration.fedoraLocation";
-    public static final String USER_NAME_KEY = "pidregistration.userName";
-    public static final String PASSWORD_KEY = "pidregistration.password";
-    public static final String DOMS_WS_API_ENDPOINT_KEY = "pidregistration.domsWSAPIEndpoint";
-    public static final String HANDLE_PREFIX_KEY = "pidregistration.handlePrefix";
-    public static final String PRIVATE_KEY_PATH = "pidregistration.privateKeyPath";
-    public static final String PRIVATE_KEY_PASSWORD = "pidregistration.privateKeyPassword";
-    public static final String PID_PREFIX = "pidregistration.pidPrefix";
-    public static final String DOMS_MAX_RESULT_SIZE = "pidregistration.doms.maxResultSize";
-    public static final String DOMS_COLLECTIONS_PREFIX = "pidregistration.doms.collections.";
+    public static final String FEDORA_LOCATION_KEY = "doms-pidregistration.fedoraLocation";
+    public static final String USER_NAME_KEY = "doms-pidregistration.userName";
+    public static final String PASSWORD_KEY = "doms-pidregistration.password";
+    public static final String DOMS_WS_API_ENDPOINT_KEY = "doms-pidregistration.domsWSAPIEndpoint";
+    public static final String HANDLE_PREFIX_KEY = "doms-pidregistration.handlePrefix";
+    public static final String PRIVATE_KEY_PATH = "doms-pidregistration.privateKeyPath";
+    public static final String PRIVATE_KEY_PASSWORD = "doms-pidregistration.privateKeyPassword";
+    public static final String PID_PREFIX = "doms-pidregistration.pidPrefix";
+    public static final String DOMS_MAX_RESULT_SIZE = "doms-pidregistration.doms.maxResultSize";
+    public static final String DOMS_COLLECTIONS_PREFIX = "doms-pidregistration.doms.collections.";
+    public static final String DATABASE_URL_KEY = "doms-pidregistration.database.url";
+    public static final String DATABASE_USERNAME_KEY = "doms-pidregistration.database.username";
+    public static final String DATABASE_PASSWORD_KEY = "doms-pidregistration.database.password";
 
     public PropertyBasedRegistrarConfiguration(File propertiesFile) {
         try {
@@ -107,5 +110,17 @@ public class PropertyBasedRegistrarConfiguration {
             }
         }
         return result;
+    }
+
+    public String getDatabaseUrl() {
+        return properties.getProperty(DATABASE_URL_KEY);
+    }
+
+    public String getDatabaseUsername() {
+        return properties.getProperty(DATABASE_USERNAME_KEY);
+    }
+
+    public String getDatabasePassword() {
+        return properties.getProperty(DATABASE_PASSWORD_KEY);
     }
 }

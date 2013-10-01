@@ -13,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Entry point for batch job. Responsible for parsing command line arguments
@@ -24,8 +22,6 @@ public class PIDRegistrationsCommandLineInterface {
 
     private static final Logger log = LoggerFactory.getLogger(PIDRegistrationsCommandLineInterface.class);
 
-    private static final SimpleDateFormat YEAR_MONTH_DAY = new SimpleDateFormat("yyyy-MM-dd");
-
     public static void main(String[] args) {
         try {
             CommandLine line = parseOptions(args);
@@ -33,18 +29,13 @@ public class PIDRegistrationsCommandLineInterface {
                 System.exit(1);
             }
 
-            log.info("Registrating from date: " + line.getOptionValue("d"));
-
-            Date fromInclusive = YEAR_MONTH_DAY.parse(line.getOptionValue("d"));
-
             PropertyBasedRegistrarConfiguration config = new PropertyBasedRegistrarConfiguration(
                     new File(System.getProperty("user.home"), "pidregistration.properties"));
 
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     new DOMSClient(config),
-                    new GlobalHandleRegistry(config),
-                    fromInclusive);
+                    new GlobalHandleRegistry(config));
 
             pidRegistrations.doRegistrations();
         } catch (Exception e) {
@@ -66,11 +57,7 @@ public class PIDRegistrationsCommandLineInterface {
     public static CommandLine parseOptions(String[] args) {
         CommandLine line;
         Option help = new Option("h", "help", false, "Print this message");
-        Option dateOption = new Option("d", "date", true,
-                                       "the date (YYYY-MM-DD) to query from (inclusive)");
-        dateOption.setRequired(true);
         Options options = new Options();
-        options.addOption(dateOption);
         options.addOption(help);
 
         CommandLineParser parser = new PosixParser();
@@ -80,13 +67,6 @@ public class PIDRegistrationsCommandLineInterface {
                 new HelpFormatter().printHelp("handleregistrationtool.sh", options);
                 return null;
             }
-
-            if (!line.hasOption("d")) {
-                System.err.println("Missing required arguments");
-                new HelpFormatter().printHelp("HandleRegistrationTool", options);
-                return null;
-            }
-            YEAR_MONTH_DAY.parse(line.getOptionValue("d"));
         } catch (Exception e) {
             System.out.println("Unable to parse command line arguments: " + e
                     .getMessage());
