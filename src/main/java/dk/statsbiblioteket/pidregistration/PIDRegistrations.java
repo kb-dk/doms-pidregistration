@@ -2,6 +2,7 @@ package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
+import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.database.DatabaseException;
 import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
@@ -49,6 +50,9 @@ public class PIDRegistrations {
         domsUpdater = new DOMSUpdater(domsClient);
 
         connection = new ConnectionFactory(configuration).createConnection();
+
+        new DatabaseSchema(configuration).createIfNotExist();
+
         jobsDao = new JobsDAO(configuration, connection);
 
         Date lastJobCreated = jobsDao.getLastJobCreated();
