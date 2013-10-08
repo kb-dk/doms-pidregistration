@@ -71,7 +71,7 @@ public class PIDRegistrations {
      * build and attach it.
      */
     public void doRegistrations() {
-        Set<Collection> collections = configuration.getDomsCollections();
+        /*Set<Collection> collections = configuration.getDomsCollections();
 
         log.info("Adding jobs to database");
         for (Collection collection : collections) {
@@ -99,7 +99,7 @@ public class PIDRegistrations {
 
         String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
         log.info(message);
-        closeConnection();
+        closeConnection();*/
     }
 
     private void beginTransaction() {

@@ -30,7 +30,7 @@ public class PIDRegistrationsCommandLineInterface {
             }
 
             PropertyBasedRegistrarConfiguration config = new PropertyBasedRegistrarConfiguration(
-                    new File(System.getProperty("user.home"), "pidregistration.properties"));
+                    new File(System.getProperty("user.home"), "doms-pidregistration.properties"));
 
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,

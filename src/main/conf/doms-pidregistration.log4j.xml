@@ -7,7 +7,7 @@
   <appender name="HandleRegistration"
             class="org.apache.log4j.RollingFileAppender">
     <param name="Threshold" value="DEBUG"/>
-    <param name="File" value="log/pidregistration.log"/>
+    <param name="File" value="../log/pidregistration.log"/>
     <param name="MaxFileSize" value="10MB"/>
     <param name="MaxBackupIndex" value="10"/>
     <layout class="org.apache.log4j.PatternLayout">

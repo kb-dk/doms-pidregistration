@@ -81,8 +81,10 @@
         <configuration>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
               <mainClass>dk.statsbiblioteket.pidregistration.PIDRegistrationsCommandLineInterface</mainClass>
+              <classpathPrefix>../lib/</classpathPrefix>
+              <addClasspath>true</addClasspath>
             </manifest>
           </archive>
         </configuration>
