@@ -2,8 +2,8 @@ package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
-import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.database.DatabaseException;
+import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
@@ -34,32 +34,22 @@ public class PIDRegistrations {
     private PropertyBasedRegistrarConfiguration configuration;
     private GlobalHandleRegistry handleRegistry;
 
+    private DOMSClient domsClient;
     private DOMSMetadataQueryer domsMetadataQueryer;
-    private DOMSObjectIDQueryer domsObjectIdQueryer;
     private DOMSUpdater domsUpdater;
     private Connection connection;
     private JobsDAO jobsDao;
 
-    public PIDRegistrations(PropertyBasedRegistrarConfiguration configuration,
-                            DOMSClient domsClient,
-                            GlobalHandleRegistry handleRegistry) {
+    public PIDRegistrations(
+            PropertyBasedRegistrarConfiguration configuration,
+            DOMSClient domsClient,
+            GlobalHandleRegistry handleRegistry) {
         this.configuration = configuration;
+        this.domsClient = domsClient;
         this.handleRegistry = handleRegistry;
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
         domsUpdater = new DOMSUpdater(domsClient);
-
-        connection = new ConnectionFactory(configuration).createConnection();
-
-        new DatabaseSchema(configuration).createIfNotExist();
-
-        jobsDao = new JobsDAO(configuration, connection);
-
-        Date lastJobCreated = jobsDao.getLastJobCreated();
-        domsObjectIdQueryer = new DOMSObjectIDQueryer(
-                domsClient,
-                new Date(lastJobCreated == null ? 0 : lastJobCreated.getTime() - 10000)
-        );
     }
 
     /**
@@ -71,7 +61,18 @@ public class PIDRegistrations {
      * build and attach it.
      */
     public void doRegistrations() {
-        /*Set<Collection> collections = configuration.getDomsCollections();
+        DatabaseSchema databaseSchema = new DatabaseSchema(configuration);
+        databaseSchema.createIfNotExist();
+
+        setupConnection();
+
+        Date lastJobCreated = jobsDao.getLastJobCreated();
+        DOMSObjectIDQueryer domsObjectIdQueryer = new DOMSObjectIDQueryer(
+                domsClient,
+                new Date(lastJobCreated == null ? 0 : lastJobCreated.getTime() - 10000)
+        );
+
+        Set<Collection> collections = configuration.getDomsCollections();
 
         log.info("Adding jobs to database");
         for (Collection collection : collections) {
@@ -88,18 +89,49 @@ public class PIDRegistrations {
         log.info("Adding handles");
         JobDTO jobDto;
 
-        while((jobDto = jobsDao.findJobError()) != null) {
+        while ((jobDto = jobsDao.findJobError()) != null) {
             jobDto.setState(JobDTO.State.PENDING);
             jobsDao.update(jobDto);
         }
 
-        while((jobDto = jobsDao.findJobPending()) != null) {
+        while ((jobDto = jobsDao.findJobPending()) != null) {
             handleObject(jobDto);
         }
 
         String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
         log.info(message);
-        closeConnection();*/
+
+        teardownConnection();
+    }
+
+    public void doUnregistrations() {
+        setupConnection();
+
+        log.info("Restoring DOMS and global handle registry to previous state...");
+        JobDTO jobDto;
+        while ((jobDto = jobsDao.findJobDone()) != null) {
+            String objectId = jobDto.getUuid();
+            log.info("Restoring {}", objectId);
+            PIDHandle handle = buildHandle(objectId);
+
+            restoreGlobalHandleRegistry(handle);
+            restoreDoms(objectId);
+
+            jobDto.setState(JobDTO.State.DELETED);
+            jobsDao.update(jobDto);
+        }
+
+        teardownConnection();
+    }
+
+    private void restoreDoms(String objectId) {
+        DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
+        metadata.detachHandle(buildHandle(objectId));
+        domsUpdater.update(objectId, metadata);
+    }
+
+    private void restoreGlobalHandleRegistry(PIDHandle handle) {
+        handleRegistry.deletePid(handle);
     }
 
     private void beginTransaction() {
@@ -125,8 +157,14 @@ public class PIDRegistrations {
         }
     }
 
-    private void closeConnection() {
+    private void setupConnection() {
+        connection = new ConnectionFactory(configuration).createConnection();
+        jobsDao = new JobsDAO(configuration, connection);
+    }
+
+    private void teardownConnection() {
         try {
+            jobsDao = null;
             connection.close();
         } catch (SQLException e) {
             throw new DatabaseException(e);

@@ -1,20 +1,13 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
-import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
-import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
 import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
-import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
-import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyException;
-import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyLoader;
 import mockit.Mocked;
 import mockit.NonStrictExpectations;
-import net.handle.hdllib.DeleteHandleRequest;
 import net.handle.hdllib.HandleException;
-import net.handle.hdllib.HandleResolver;
-import net.handle.hdllib.PublicKeyAuthenticationInfo;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -23,14 +16,7 @@ import javax.xml.transform.TransformerException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.security.PrivateKey;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Ignore
 public class PidRegistrationPerformanceTest {
@@ -43,12 +29,8 @@ public class PidRegistrationPerformanceTest {
     private DOMSObjectIDQueryer domsObjectIdQueryer = null;
 
     private DOMSClient domsClient = new DOMSClient(CONFIG);
-    private DOMSMetadataQueryer domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
-    private DOMSUpdater domsUpdater = new DOMSUpdater(domsClient);
     private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG);
-
-    private List<String> idsToHandle = new ArrayList<String>();
-    private Map<String, DOMSMetadata> domsOriginals = new HashMap<String, DOMSMetadata>();
+    private PIDRegistrations pidRegistrations;
 
     private static final String REKLAME_ID = "reklamefilm";
     private static final String REKLAME_DOMS_COLLECTION = "doms:Collection_Reklamefilm";
@@ -67,18 +49,12 @@ public class PidRegistrationPerformanceTest {
             returns(fetchIds("reklamefilm.txt"), new ArrayList<String>());
         }};
 
-        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry);
+        new DatabaseSchema(CONFIG).removeIfExists();
 
-        idsToHandle.addAll(fetchIds("radiotv.txt"));
-        idsToHandle.addAll(fetchIds("reklamefilm.txt"));
-
-        for (String objectId : idsToHandle) {
-            DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
-            domsOriginals.put(objectId, metadata);
-        }
+        pidRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry);
 
         long start = System.currentTimeMillis();
-        PIDRegistrations.doRegistrations();
+        pidRegistrations.doRegistrations();
         long end = System.currentTimeMillis();
         System.out.println("Registration took " + (end - start) + " ms. (Not including DOMS query)");
     }
@@ -98,48 +74,10 @@ public class PidRegistrationPerformanceTest {
     @After
     public void teardown() throws HandleException, TransformerException {
         long start = System.currentTimeMillis();
-        restoreDoms();
+        pidRegistrations.doUnregistrations();
+        pidRegistrations = null;
         long end = System.currentTimeMillis();
 
-        System.out.println("Restoring DOMS took " + (end - start) + " ms");
-
-        restoreGlobalHandleRegistry();
-        end = System.currentTimeMillis();
-
-        System.out.println("Restoring handle registry took " + (end - start) + " ms");
-    }
-
-    private void restoreDoms() throws TransformerException {
-        for (String objectId : domsOriginals.keySet()) {
-            domsUpdater.update(objectId, domsOriginals.get(objectId));
-        }
-    }
-
-    private void restoreGlobalHandleRegistry() throws HandleException {
-        String adminIdPrefix = "0.NA/";
-        Charset defaultEncoding = Charset.forName("UTF8");
-        int adminIdIndex = 300;
-
-        String adminId = adminIdPrefix + CONFIG.getHandlePrefix();
-
-        PublicKeyAuthenticationInfo authInfo = new PublicKeyAuthenticationInfo(
-                adminId.getBytes(defaultEncoding), adminIdIndex, loadPrivateKey());
-
-        HandleResolver handleResolver = new HandleResolver();
-
-        List<String> idsToRestore = idsToHandle;
-        for (String objectId : idsToRestore) {
-            String handle = new PIDHandle(CONFIG.getHandlePrefix(), objectId).asString();
-            DeleteHandleRequest request = new DeleteHandleRequest(handle.getBytes(defaultEncoding), authInfo);
-            handleResolver.processRequest(request);
-        }
-    }
-
-    private PrivateKey loadPrivateKey() throws PrivateKeyException {
-        String path = CONFIG.getPrivateKeyPath();
-        String password = CONFIG.getPrivateKeyPassword();
-        PrivateKeyLoader privateKeyLoader =
-                path == null ? new PrivateKeyLoader(password) : new PrivateKeyLoader(password, path);
-        return privateKeyLoader.load();
+        System.out.println("Restoring DOMS and handle registry took " + (end - start) + " ms");
     }
 }

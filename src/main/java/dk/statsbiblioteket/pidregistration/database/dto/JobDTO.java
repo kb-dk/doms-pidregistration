@@ -10,7 +10,8 @@ public class JobDTO {
     public enum State {
         PENDING("pending"),
         DONE("done"),
-        ERROR("error");
+        ERROR("error"),
+        DELETED("deleted");
 
         private String databaseStateName;
 

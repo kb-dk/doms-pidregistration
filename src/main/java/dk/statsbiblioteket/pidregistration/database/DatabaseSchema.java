@@ -44,7 +44,7 @@ public class DatabaseSchema {
         }
     }
 
-    public void executeScript(String filename) {
+    private void executeScript(String filename) {
         try {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(DatabaseSchema.class.getResourceAsStream("/" + filename), "UTF-8")

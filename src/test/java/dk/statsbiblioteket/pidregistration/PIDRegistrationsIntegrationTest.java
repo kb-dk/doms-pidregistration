@@ -1,6 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
@@ -91,6 +92,8 @@ public class PIDRegistrationsIntegrationTest {
             domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION));
             returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
         }};
+
+        new DatabaseSchema(CONFIG).removeIfExists();
 
         PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry);
 

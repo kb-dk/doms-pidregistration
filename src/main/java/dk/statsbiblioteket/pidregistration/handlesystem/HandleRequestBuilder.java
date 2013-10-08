@@ -6,6 +6,7 @@ import net.handle.hdllib.AdminRecord;
 import net.handle.hdllib.AuthenticationInfo;
 import net.handle.hdllib.Common;
 import net.handle.hdllib.CreateHandleRequest;
+import net.handle.hdllib.DeleteHandleRequest;
 import net.handle.hdllib.Encoder;
 import net.handle.hdllib.HandleValue;
 import net.handle.hdllib.ModifyValueRequest;
@@ -116,5 +117,14 @@ public class HandleRequestBuilder {
     public AddValueRequest buildAddUrlRequest(PIDHandle handle, String url) {
         HandleValue handleValue = buildHandleValue(valueRecordIndex, "URL", encode(url));
         return new AddValueRequest(encode(handle.asString()), handleValue, authenticationInfo);
+    }
+
+    /**
+     * Used to delete a handle
+     * @param handle the handle to delete
+     * @return the finished request
+     */
+    public DeleteHandleRequest buildDeleteHandleRequest(PIDHandle handle) {
+        return new DeleteHandleRequest(handle.asString().getBytes(encoding), authenticationInfo);
     }
 }

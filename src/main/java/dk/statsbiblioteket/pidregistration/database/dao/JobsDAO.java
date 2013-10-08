@@ -96,6 +96,10 @@ public class JobsDAO {
         }
     }
 
+    public JobDTO findJobDone() {
+        return findJob(JobDTO.State.DONE);
+    }
+
     public JobDTO findJobPending() {
         return findJob(JobDTO.State.PENDING);
     }

@@ -1,6 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.apache.commons.cli.CommandLine;
@@ -32,12 +33,22 @@ public class PIDRegistrationsCommandLineInterface {
             PropertyBasedRegistrarConfiguration config = new PropertyBasedRegistrarConfiguration(
                     new File(System.getProperty("user.home"), "doms-pidregistration.properties"));
 
+            boolean testMode = line.hasOption("t");
+
+            if (testMode) {
+                new DatabaseSchema(config).removeIfExists();
+            }
+
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     new DOMSClient(config),
                     new GlobalHandleRegistry(config));
 
             pidRegistrations.doRegistrations();
+
+            if (testMode) {
+                pidRegistrations.doUnregistrations();
+            }
         } catch (Exception e) {
             System.err.println("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             e.printStackTrace();
@@ -57,8 +68,10 @@ public class PIDRegistrationsCommandLineInterface {
     public static CommandLine parseOptions(String[] args) {
         CommandLine line;
         Option help = new Option("h", "help", false, "Print this message");
+        Option testOption = new Option("t", "test", false, "Test run");
         Options options = new Options();
         options.addOption(help);
+        options.addOption(testOption);
 
         CommandLineParser parser = new PosixParser();
         try {

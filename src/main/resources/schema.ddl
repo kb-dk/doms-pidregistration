@@ -1,4 +1,4 @@
-CREATE TYPE job_state AS ENUM ('pending', 'done', 'error');
+CREATE TYPE job_state AS ENUM ('pending', 'done', 'error', 'deleted');
 CREATE TABLE jobs (
   id                SERIAL PRIMARY KEY UNIQUE,
   uuid              VARCHAR(41) NOT NULL UNIQUE,

@@ -91,6 +91,16 @@ public class GlobalHandleRegistry {
         return false;
     }
 
+    /**
+     * Delete a handle in the global handle registry.
+     * @param handle the handle to delete
+     * @throws RegisteringPidFailedException external server failed
+     */
+    public void deletePid(PIDHandle handle) {
+        AbstractRequest request = handleRequestBuilder.buildDeleteHandleRequest(handle);
+        processRequest(request);
+    }
+
     private HandleValue[] lookupHandle(PIDHandle handle) {
         try {
             return handleResolver.resolveHandle(handle.asString());
