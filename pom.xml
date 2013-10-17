@@ -7,27 +7,62 @@
   <packaging>jar</packaging>
   <name>pidregistration</name>
 
+  <parent>
+    <groupId>org.sbforge</groupId>
+    <artifactId>sbforge-parent</artifactId>
+    <version>9</version>
+  </parent>
+
   <scm>
     <connection>scm:git:https://github.com/statsbiblioteket/doms-pidregistration.git</connection>
     <developerConnection>scm:git:https://github.com/statsbiblioteket/doms-pidregistration.git</developerConnection>
     <url>https://github.com/statsbiblioteket/doms-pidregistration</url>
   </scm>
+  <repositories>
+    <repository>
+      <id>sbforge-nexus</id>
+      <url>https://sbforge.org/nexus/content/groups/public</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>sbforge-nexus</id>
+      <url>https://sbforge.org/nexus/content/groups/public</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
 
   <dependencies>
     <dependency>
       <groupId>dk.statsbiblioteket.sbutil</groupId>
       <artifactId>sbutil</artifactId>
       <version>0.5.5</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>commons-cli</artifactId>
+          <groupId>commons-cli</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>net.handle</groupId>
       <artifactId>hdllib</artifactId>
       <version>7.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-client</artifactId>
-      <version>1.3</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
@@ -44,7 +79,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <version>1.6.1</version>
+      <version>1.6.4</version>
       <scope>runtime</scope>
     </dependency>
 
@@ -53,6 +88,7 @@
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <version>9.1-901.jdbc4</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- test -->
