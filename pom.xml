@@ -5,7 +5,7 @@
   <artifactId>doms-pidregistration</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>pidregistration</name>
+  <name>doms-pidregistration</name>
 
   <parent>
     <groupId>org.sbforge</groupId>
