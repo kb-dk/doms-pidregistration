@@ -20,6 +20,11 @@
       <destName>${project.artifactId}.jar</destName>
       <outputDirectory>bin</outputDirectory>
     </file>
+    <file>
+      <source>${user.home}/admpriv.bin</source>
+      <destName>admpriv.bin</destName>
+      <outputDirectory>conf</outputDirectory>
+    </file>
   </files>
 
   <fileSets>
