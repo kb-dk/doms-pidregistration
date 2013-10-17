@@ -74,18 +74,19 @@ public class PIDRegistrations {
 
         Set<Collection> collections = configuration.getDomsCollections();
 
+        int jobCount = 0;
         log.info("Adding jobs to database");
         for (Collection collection : collections) {
             List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
             while (!objectIds.isEmpty()) {
-
                 beginTransaction();
                 persistObjects(collection, objectIds);
                 commitTransaction();
+                jobCount += objectIds.size();
                 objectIds = domsObjectIdQueryer.findNextIn(collection);
             }
         }
-        log.info("Done adding jobs");
+        log.info("Added {} jobs", jobCount);
         log.info("Adding handles");
         JobDTO jobDto;
 
@@ -175,7 +176,7 @@ public class PIDRegistrations {
         List<JobDTO> jobDtos = new ArrayList<JobDTO>();
         for (String objectId : objectIds) {
             if (jobsDao.findJobWithUUID(objectId) != null) {
-                log.info("Job with UUID " + objectId + " already exists in job list. Ignoring");
+                log.debug("Job with UUID " + objectId + " already exists in job list. Ignoring");
             } else {
                 jobDtos.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
             }
@@ -219,7 +220,7 @@ public class PIDRegistrations {
         DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
         boolean domsChanged = false;
         if (!metadata.handleExists(pidHandle)) {
-            log.info(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
+            log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
             metadata.attachHandle(pidHandle);
             domsUpdater.update(objectId, metadata);
             domsChanged = true;
