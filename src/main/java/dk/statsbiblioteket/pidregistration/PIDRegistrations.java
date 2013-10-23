@@ -28,6 +28,8 @@ import java.util.Set;
 public class PIDRegistrations {
     private static final Logger log = LoggerFactory.getLogger(PIDRegistrations.class);
 
+    private static final int TEST_JOB_COUNT_SOFT_LIMIT = 10000;
+
     private int success = 0;
     private int failure = 0;
 
@@ -39,14 +41,17 @@ public class PIDRegistrations {
     private DOMSUpdater domsUpdater;
     private Connection connection;
     private JobsDAO jobsDao;
+    private boolean testMode;
 
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
-            GlobalHandleRegistry handleRegistry) {
+            GlobalHandleRegistry handleRegistry,
+            boolean testMode) {
         this.configuration = configuration;
         this.domsClient = domsClient;
         this.handleRegistry = handleRegistry;
+        this.testMode = testMode;
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
         domsUpdater = new DOMSUpdater(domsClient);
@@ -77,12 +82,19 @@ public class PIDRegistrations {
         int jobCount = 0;
         log.info("Adding jobs to database");
         for (Collection collection : collections) {
+            int jobCountPerCollection = 0;
             List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
             while (!objectIds.isEmpty()) {
                 beginTransaction();
-                persistObjects(collection, objectIds);
+                int jobsAdded = persistObjects(collection, objectIds);
                 commitTransaction();
-                jobCount += objectIds.size();
+                jobCount += jobsAdded;
+                jobCountPerCollection += jobsAdded;
+                log.info("Jobs added so far: {}", jobCount);
+                if (testMode && jobCountPerCollection >= TEST_JOB_COUNT_SOFT_LIMIT) {
+                    break;
+                }
+
                 objectIds = domsObjectIdQueryer.findNextIn(collection);
             }
         }
@@ -172,17 +184,20 @@ public class PIDRegistrations {
         }
     }
 
-    private void persistObjects(Collection collection, List<String> objectIds) {
+    private int persistObjects(Collection collection, List<String> objectIds) {
         List<JobDTO> jobDtos = new ArrayList<JobDTO>();
+        int count = 0;
         for (String objectId : objectIds) {
             if (jobsDao.findJobWithUUID(objectId) != null) {
                 log.debug("Job with UUID " + objectId + " already exists in job list. Ignoring");
             } else {
                 jobDtos.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
+                count++;
             }
         }
 
         jobsDao.save(jobDtos);
+        return count;
     }
 
 

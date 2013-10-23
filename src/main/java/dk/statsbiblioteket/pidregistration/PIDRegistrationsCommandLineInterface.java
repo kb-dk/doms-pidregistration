@@ -42,7 +42,8 @@ public class PIDRegistrationsCommandLineInterface {
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     new DOMSClient(config),
-                    new GlobalHandleRegistry(config));
+                    new GlobalHandleRegistry(config),
+                    testMode);
 
             pidRegistrations.doRegistrations();
 
