@@ -1,7 +1,6 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
-import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.apache.commons.cli.CommandLine;
@@ -34,10 +33,6 @@ public class PIDRegistrationsCommandLineInterface {
                     new File(System.getProperty("user.home"), "doms-pidregistration.properties"));
 
             boolean testMode = line.hasOption("t");
-
-            if (testMode) {
-                new DatabaseSchema(config).removeIfExists();
-            }
 
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,

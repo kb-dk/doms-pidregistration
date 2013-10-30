@@ -28,7 +28,7 @@ import java.util.Set;
 public class PIDRegistrations {
     private static final Logger log = LoggerFactory.getLogger(PIDRegistrations.class);
 
-    private static final int TEST_JOB_COUNT_SOFT_LIMIT = 10000;
+    private static final int TEST_JOB_COUNT_SOFT_LIMIT = 1000;
 
     private int success = 0;
     private int failure = 0;
@@ -122,18 +122,26 @@ public class PIDRegistrations {
 
         log.info("Restoring DOMS and global handle registry to previous state...");
         JobDTO jobDto;
+        int errors = 0;
         while ((jobDto = jobsDao.findJobDone()) != null) {
-            String objectId = jobDto.getUuid();
-            log.info("Restoring {}", objectId);
-            PIDHandle handle = buildHandle(objectId);
+            try {
+                String objectId = jobDto.getUuid();
+                log.info("Restoring {}", objectId);
+                PIDHandle handle = buildHandle(objectId);
 
-            restoreGlobalHandleRegistry(handle);
-            restoreDoms(objectId);
+                restoreGlobalHandleRegistry(handle);
+                restoreDoms(objectId);
 
-            jobDto.setState(JobDTO.State.DELETED);
-            jobsDao.update(jobDto);
+                jobDto.setState(JobDTO.State.DELETED);
+                jobsDao.update(jobDto);
+            } catch (Exception e) {
+                errors++;
+                log.error("Error when trying to restore {}", jobDto.getUuid(), e);
+                jobDto.setState(JobDTO.State.ERROR);
+                jobsDao.update(jobDto);
+            }
         }
-
+        log.info("{} errors encountered unregistrating objects IDs", errors);
         teardownConnection();
     }
 
