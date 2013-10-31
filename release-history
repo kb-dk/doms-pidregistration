@@ -3,6 +3,10 @@ Release history for the doms-pidregistration project.
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
 
+1.0.4 released 2013-10-31
+ * Improved robustness of test mode
+ * Can now handle a given number of objects to test in test mode
+
 1.0.3 released 2013-10-24
  * Improved logging
 

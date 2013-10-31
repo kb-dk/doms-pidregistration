@@ -95,7 +95,7 @@ public class PIDRegistrationsIntegrationTest {
 
         new DatabaseSchema(CONFIG).removeIfExists();
 
-        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, false);
+        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry);
 
         List<String> idsToBePutInDoms = new ArrayList<String>();
         idsToBePutInDoms.addAll(REKLAME_IDS_UNDER_TEST);

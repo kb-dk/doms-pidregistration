@@ -21,8 +21,10 @@ public class PIDRegistrationsCommandLineInterfaceTest extends TestCase {
         cl = PIDRegistrationsCommandLineInterface.parseOptions(new String[]{"-d", "2013-01-29"});
         assertNull(cl);
         cl = PIDRegistrationsCommandLineInterface.parseOptions(new String[]{"-t"});
+        assertNull(cl);
+        cl = PIDRegistrationsCommandLineInterface.parseOptions(new String[]{"-t 100"});
         assertTrue(cl.hasOption("t"));
-        cl = PIDRegistrationsCommandLineInterface.parseOptions(new String[]{"--test"});
+        cl = PIDRegistrationsCommandLineInterface.parseOptions(new String[]{"--test=100"});
         assertTrue(cl.hasOption("t"));
     }
 }

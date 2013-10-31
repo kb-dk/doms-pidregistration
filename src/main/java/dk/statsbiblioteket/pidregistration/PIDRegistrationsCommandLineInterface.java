@@ -32,17 +32,17 @@ public class PIDRegistrationsCommandLineInterface {
             PropertyBasedRegistrarConfiguration config = new PropertyBasedRegistrarConfiguration(
                     new File(System.getProperty("user.home"), "doms-pidregistration.properties"));
 
-            boolean testMode = line.hasOption("t");
+            Integer numberOfObjectsToTest = line.hasOption("t") ? Integer.parseInt(line.getOptionValue("t")) : null;
 
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     new DOMSClient(config),
                     new GlobalHandleRegistry(config),
-                    testMode);
+                    numberOfObjectsToTest);
 
             pidRegistrations.doRegistrations();
 
-            if (testMode) {
+            if (numberOfObjectsToTest != null) {
                 pidRegistrations.doUnregistrations();
             }
         } catch (Exception e) {
@@ -64,7 +64,7 @@ public class PIDRegistrationsCommandLineInterface {
     public static CommandLine parseOptions(String[] args) {
         CommandLine line;
         Option help = new Option("h", "help", false, "Print this message");
-        Option testOption = new Option("t", "test", false, "Test run");
+        Option testOption = new Option("t", "test", true, "The number of objects per collection to use in test");
         Options options = new Options();
         options.addOption(help);
         options.addOption(testOption);

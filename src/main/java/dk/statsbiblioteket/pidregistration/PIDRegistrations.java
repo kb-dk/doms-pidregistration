@@ -28,8 +28,6 @@ import java.util.Set;
 public class PIDRegistrations {
     private static final Logger log = LoggerFactory.getLogger(PIDRegistrations.class);
 
-    private static final int TEST_JOB_COUNT_SOFT_LIMIT = 1000;
-
     private int success = 0;
     private int failure = 0;
 
@@ -41,17 +39,25 @@ public class PIDRegistrations {
     private DOMSUpdater domsUpdater;
     private Connection connection;
     private JobsDAO jobsDao;
-    private boolean testMode;
+
+    private Integer numberOfObjectsToTest;
+
+    public PIDRegistrations(
+            PropertyBasedRegistrarConfiguration configuration,
+            DOMSClient domsClient,
+            GlobalHandleRegistry handleRegistry) {
+        this(configuration, domsClient, handleRegistry, null);
+    }
 
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
             GlobalHandleRegistry handleRegistry,
-            boolean testMode) {
+            Integer numberOfObjectsToTest) {
         this.configuration = configuration;
         this.domsClient = domsClient;
         this.handleRegistry = handleRegistry;
-        this.testMode = testMode;
+        this.numberOfObjectsToTest = numberOfObjectsToTest;
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
         domsUpdater = new DOMSUpdater(domsClient);
@@ -74,7 +80,7 @@ public class PIDRegistrations {
         Date lastJobCreated = jobsDao.getLastJobCreated();
         DOMSObjectIDQueryer domsObjectIdQueryer = new DOMSObjectIDQueryer(
                 domsClient,
-                new Date(lastJobCreated == null ? 0 : lastJobCreated.getTime() - 10000)
+                new Date(lastJobCreated == null || isTestMode() ? 0 : lastJobCreated.getTime() - 10000)
         );
 
         Set<Collection> collections = configuration.getDomsCollections();
@@ -86,12 +92,20 @@ public class PIDRegistrations {
             List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
             while (!objectIds.isEmpty()) {
                 beginTransaction();
-                int jobsAdded = persistObjects(collection, objectIds);
+                List<JobDTO> jobsToBeAdded = buildJobs(collection, objectIds);
+                if (isTestMode() && jobsToBeAdded.size() > numberOfObjectsToTest) {
+                    jobsToBeAdded = jobsToBeAdded.subList(0, numberOfObjectsToTest);
+                }
+                jobsDao.save(jobsToBeAdded);
                 commitTransaction();
-                jobCount += jobsAdded;
+
+                int jobsAdded = jobsToBeAdded.size();
+
                 jobCountPerCollection += jobsAdded;
+                jobCount += jobsAdded;
                 log.info("Jobs added so far: {}", jobCount);
-                if (testMode && jobCountPerCollection >= TEST_JOB_COUNT_SOFT_LIMIT) {
+
+                if (isTestMode() && jobCountPerCollection >= numberOfObjectsToTest) {
                     break;
                 }
 
@@ -115,6 +129,10 @@ public class PIDRegistrations {
         log.info(message);
 
         teardownConnection();
+    }
+
+    private boolean isTestMode() {
+        return numberOfObjectsToTest != null;
     }
 
     public void doUnregistrations() {
@@ -192,20 +210,17 @@ public class PIDRegistrations {
         }
     }
 
-    private int persistObjects(Collection collection, List<String> objectIds) {
-        List<JobDTO> jobDtos = new ArrayList<JobDTO>();
-        int count = 0;
+    private List<JobDTO> buildJobs(Collection collection, List<String> objectIds) {
+        List<JobDTO> result = new ArrayList<JobDTO>();
         for (String objectId : objectIds) {
             if (jobsDao.findJobWithUUID(objectId) != null) {
                 log.debug("Job with UUID " + objectId + " already exists in job list. Ignoring");
             } else {
-                jobDtos.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
-                count++;
+                result.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
             }
         }
 
-        jobsDao.save(jobDtos);
-        return count;
+        return result;
     }
 
 
