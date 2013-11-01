@@ -25,23 +25,38 @@ public class DOMSClient {
 
     private static final String DC_DATASTREAM_ID = "DC";
 
-    private final CentralWebservice centralWebservice;
+    private PropertyBasedRegistrarConfiguration configuration;
+
+    private CentralWebservice centralWebservice;
     private int maxDomsResultSize;
 
-    public DOMSClient(PropertyBasedRegistrarConfiguration config) {
-        centralWebservice =
-                new CentralWebserviceService(config.getDomsWSAPIEndpoint(), CENTRAL_WEBSERVICE_SERVICE)
-                        .getCentralWebservicePort();
-
-        Map<String, Object> domsAPILogin = ((BindingProvider) centralWebservice)
-                .getRequestContext();
-        domsAPILogin.put(BindingProvider.USERNAME_PROPERTY, config.getUsername());
-        domsAPILogin.put(BindingProvider.PASSWORD_PROPERTY, config.getPassword());
-        maxDomsResultSize = config.getDomsMaxResultSize();
+    public DOMSClient(PropertyBasedRegistrarConfiguration configuration) {
+        this.configuration = configuration;
+        maxDomsResultSize = configuration.getDomsMaxResultSize();
     }
 
     public String getDatastreamContents(String objectId) throws MethodFailedException, InvalidResourceException, InvalidCredentialsException {
         return getCentralWebservice().getDatastreamContents(objectId, DC_DATASTREAM_ID);
+    }
+
+    private CentralWebservice getCentralWebservice() {
+        if (centralWebservice == null) {
+            disableEntityExpansionLimit();
+            centralWebservice =
+                    new CentralWebserviceService(configuration.getDomsWSAPIEndpoint(), CENTRAL_WEBSERVICE_SERVICE)
+                            .getCentralWebservicePort();
+            Map<String, Object> domsAPILogin = ((BindingProvider) centralWebservice)
+                    .getRequestContext();
+            domsAPILogin.put(BindingProvider.USERNAME_PROPERTY, configuration.getUsername());
+            domsAPILogin.put(BindingProvider.PASSWORD_PROPERTY, configuration.getPassword());
+        }
+        return centralWebservice;
+    }
+
+    private void disableEntityExpansionLimit() {
+        // JDK 1.7 u45+ enables a security feature per default that limits the number of entity expansions allowed
+        // This causes JAX-WS to fail after having run for a while.
+        System.getProperties().setProperty("jdk.xml.entityExpansionLimit", "0");
     }
 
     public List<RecordDescription> getIDsModified(long sinceExclusive, Collection collection) throws InvalidCredentialsException, MethodFailedException {
@@ -64,9 +79,5 @@ public class DOMSClient {
     public boolean isActive(String objectId) throws MethodFailedException, InvalidResourceException, InvalidCredentialsException {
         String state = getCentralWebservice().getObjectProfile(objectId).getState();
         return "A".equals(state);
-    }
-
-    private CentralWebservice getCentralWebservice() {
-        return centralWebservice;
     }
 }
