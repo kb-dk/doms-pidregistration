@@ -3,6 +3,9 @@ Release history for the doms-pidregistration project.
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
 
+1.0.6 released
+ * Added index to state
+
 1.0.5 released 2013-11-04
  * Entity expansion error fixed by disabling entity expansion limit
  * Signature error fixed by updating handle client to v7.3.1
