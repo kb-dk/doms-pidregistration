@@ -12,3 +12,8 @@ CREATE INDEX jobs_collection_index ON jobs (collection);
 CREATE INDEX jobs_state ON jobs (state);
 CREATE INDEX jobs_created_index ON jobs (created);
 CREATE INDEX jobs_last_state_change_index ON jobs (last_state_change);
+
+CREATE TABLE collection_timestamps (
+  collection        VARCHAR(20) NOT NULL UNIQUE,
+  latest_read       TIMESTAMP NOT NULL
+);

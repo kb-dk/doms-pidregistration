@@ -27,6 +27,7 @@ import java.nio.charset.Charset;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,10 +87,10 @@ public class PIDRegistrationsIntegrationTest {
     public void testRegistrations() throws TransformerException, HandleException {
         new NonStrictExpectations() {{
 
-            domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION));
+            domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION), new Date(0));
             returns(TV_IDS_UNDER_TEST, new ArrayList<String>());
 
-            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION));
+            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION), new Date(0));
             returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
         }};
 

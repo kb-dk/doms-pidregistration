@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Date;
 
 @Ignore
 public class PidRegistrationPerformanceTest {
@@ -42,10 +43,10 @@ public class PidRegistrationPerformanceTest {
     public void testRegistrations() throws TransformerException, HandleException, IOException {
         new NonStrictExpectations() {{
 
-            domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION));
+            domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION), new Date(0));
             returns(fetchIds("radiotv.txt"), new ArrayList<String>());
 
-            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION));
+            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION), new Date(0));
             returns(fetchIds("reklamefilm.txt"), new ArrayList<String>());
         }};
 

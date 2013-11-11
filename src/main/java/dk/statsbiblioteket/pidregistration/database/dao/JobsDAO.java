@@ -30,8 +30,6 @@ public class JobsDAO {
     private static final String GET_JOBS_WITH_UUID =
             "SELECT id, uuid, collection, state, created, last_state_change FROM jobs where uuid=?";
 
-    private static final String GET_LAST_CREATED = "select max(created) from jobs";
-
     private Connection connection;
     private PropertyBasedRegistrarConfiguration configuration;
 
@@ -167,19 +165,5 @@ public class JobsDAO {
             }
         }
         return null;
-    }
-
-    public Date getLastJobCreated() {
-        PreparedStatement ps = buildPreparedStatement(GET_LAST_CREATED);
-        try {
-            ResultSet resultSet = ps.executeQuery();
-            Date result = null;
-            if (resultSet.next() && resultSet.getTimestamp("max") != null) {
-                result = new Date(resultSet.getTimestamp("max").getTime());
-            }
-            return result;
-        } catch (SQLException e) {
-            throw new DatabaseException(e.getNextException());
-        }
     }
 }

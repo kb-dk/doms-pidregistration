@@ -9,40 +9,39 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  */
 public class DOMSObjectIDQueryer {
     private static final Logger log = LoggerFactory.getLogger(DOMSObjectIDQueryer.class);
 
-    private Date fromInclusive;
     private DOMSClient domsClient;
-    private Map<Collection, Long> collectionTimestamps = new HashMap<Collection, Long>();
 
-    public DOMSObjectIDQueryer(DOMSClient domsClient, Date fromInclusive) {
+    public DOMSObjectIDQueryer(DOMSClient domsClient) {
         this.domsClient = domsClient;
-        this.fromInclusive = fromInclusive;
     }
 
-    public List<String> findNextIn(Collection collection) {
+    public DOMSObjectIDQueryResult findNextIn(Collection collection, Date sinceInclusive) {
         try {
-            log.debug("Querying DOMS for objects in collection {} modified since {}", collection, fromInclusive);
             List<String> result = new ArrayList<String>();
-            if (!collectionTimestamps.containsKey(collection)) {
-                collectionTimestamps.put(collection, fromInclusive.getTime() == 0 ? 0 : fromInclusive.getTime() - 1);
-            }
+            log.debug("Querying DOMS for objects in collection {} modified since {} ({})", new Object[] {
+                      collection,
+                      sinceInclusive, sinceInclusive.getTime()});
 
-            long sinceExclusive = collectionTimestamps.get(collection);
-            List<RecordDescription> recordDescriptions = domsClient.getIDsModified(sinceExclusive, collection);
+            Date latestReadSoFar = sinceInclusive;
+            List<RecordDescription> recordDescriptions = domsClient.getIDsModified(sinceInclusive, collection);
             for (RecordDescription recordDescription : recordDescriptions) {
-                collectionTimestamps.put(collection, recordDescription.getDate());
+                Date recordDescriptionDate = new Date(recordDescription.getDate());
+                if (recordDescriptionDate.after(latestReadSoFar)) {
+                    latestReadSoFar = recordDescriptionDate;
+                }
+
                 result.add(recordDescription.getPid());
             }
+
             log.debug("Got {} objects in collection {}", result.size(), collection);
-            return result;
+            return new DOMSObjectIDQueryResult(result, latestReadSoFar);
         } catch (InvalidCredentialsException e) {
             throw new BackendInvalidCredsException(
                     "Invalid Credentials Supplied", e);

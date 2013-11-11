@@ -4,11 +4,13 @@ import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarC
 import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
 import dk.statsbiblioteket.pidregistration.database.DatabaseException;
 import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
+import dk.statsbiblioteket.pidregistration.database.dao.CollectionTimestampsDAO;
 import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryResult;
 import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
 import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
@@ -39,6 +41,7 @@ public class PIDRegistrations {
     private DOMSUpdater domsUpdater;
     private Connection connection;
     private JobsDAO jobsDao;
+    private CollectionTimestampsDAO collectionTimestampsDao;
 
     private Integer numberOfObjectsToTest;
 
@@ -77,11 +80,7 @@ public class PIDRegistrations {
 
         setupConnection();
 
-        Date lastJobCreated = jobsDao.getLastJobCreated();
-        DOMSObjectIDQueryer domsObjectIdQueryer = new DOMSObjectIDQueryer(
-                domsClient,
-                new Date(lastJobCreated == null || isTestMode() ? 0 : lastJobCreated.getTime() - 10000)
-        );
+        DOMSObjectIDQueryer domsObjectIdQueryer = new DOMSObjectIDQueryer(domsClient);
 
         Set<Collection> collections = configuration.getDomsCollections();
 
@@ -89,14 +88,19 @@ public class PIDRegistrations {
         log.info("Adding jobs to database");
         for (Collection collection : collections) {
             int jobCountPerCollection = 0;
-            List<String> objectIds = domsObjectIdQueryer.findNextIn(collection);
-            while (!objectIds.isEmpty()) {
+            Date sinceInclusive = getOrCreateTimestampFor(collection);
+            DOMSObjectIDQueryResult queryResult = domsObjectIdQueryer.findNextIn(collection, sinceInclusive);
+            while (!queryResult.isEmpty()) {
                 beginTransaction();
-                List<JobDTO> jobsToBeAdded = buildJobs(collection, objectIds);
+
+                List<JobDTO> jobsToBeAdded = buildJobs(collection, queryResult.getObjectIds());
                 if (isTestMode() && jobsToBeAdded.size() > numberOfObjectsToTest) {
                     jobsToBeAdded = jobsToBeAdded.subList(0, numberOfObjectsToTest);
                 }
                 jobsDao.save(jobsToBeAdded);
+                sinceInclusive = queryResult.getLatestRead();
+                updateTimestamp(collection, sinceInclusive);
+
                 commitTransaction();
 
                 int jobsAdded = jobsToBeAdded.size();
@@ -105,11 +109,19 @@ public class PIDRegistrations {
                 jobCount += jobsAdded;
                 log.info("Jobs added so far: {}", jobCount);
 
+                if (queryResult.getObjectIds().size() < domsClient.getMaxDomsResultSize()) {
+                    log.debug("DOMS client returned {} objects which is less than the max result size of {}. Assuming no more objects.",
+                              queryResult.getObjectIds().size(),
+                              domsClient.getMaxDomsResultSize()
+                    );
+                    break;
+                }
+
                 if (isTestMode() && jobCountPerCollection >= numberOfObjectsToTest) {
                     break;
                 }
 
-                objectIds = domsObjectIdQueryer.findNextIn(collection);
+                queryResult = domsObjectIdQueryer.findNextIn(collection, sinceInclusive);
             }
         }
         log.info("Added {} jobs", jobCount);
@@ -199,6 +211,7 @@ public class PIDRegistrations {
     private void setupConnection() {
         connection = new ConnectionFactory(configuration).createConnection();
         jobsDao = new JobsDAO(configuration, connection);
+        collectionTimestampsDao = new CollectionTimestampsDAO(configuration, connection);
     }
 
     private void teardownConnection() {
@@ -221,6 +234,19 @@ public class PIDRegistrations {
         }
 
         return result;
+    }
+
+    private Date getOrCreateTimestampFor(Collection collection) {
+        Date result = collectionTimestampsDao.load(collection);
+        if (result == null) {
+            result = new Date(0L);
+            collectionTimestampsDao.save(collection, result);
+        }
+        return result;
+    }
+
+    private void updateTimestamp(Collection collection, Date timestamp) {
+        collectionTimestampsDao.update(collection, timestamp);
     }
 
 

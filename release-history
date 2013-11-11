@@ -3,6 +3,10 @@ Release history for the doms-pidregistration project.
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
 
+1.0.7 released
+ * Handled both behaviours of getIDsmodified (since seems to be either exclusive or inclusive depending on the environment)
+ * Added timestamps for last object read in the database
+
 1.0.6 released 2013-11-06
  * Added index to state
 

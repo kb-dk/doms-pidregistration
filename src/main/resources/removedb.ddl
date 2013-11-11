@@ -4,4 +4,5 @@ DROP INDEX jobs_state;
 DROP INDEX jobs_collection_index;
 DROP INDEX jobs_uuid_index;
 DROP TABLE jobs;
-DROP TYPE job_state;
+DROP TYPE  job_state;
+DROP TABLE collection_timestamps

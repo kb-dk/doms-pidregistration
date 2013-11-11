@@ -12,6 +12,7 @@ import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.RecordDescrip
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -59,9 +60,9 @@ public class DOMSClient {
         System.getProperties().setProperty("jdk.xml.entityExpansionLimit", "0");
     }
 
-    public List<RecordDescription> getIDsModified(long sinceExclusive, Collection collection) throws InvalidCredentialsException, MethodFailedException {
+    public List<RecordDescription> getIDsModified(Date sinceInclusive, Collection collection) throws InvalidCredentialsException, MethodFailedException {
         return getCentralWebservice().getIDsModified(
-                sinceExclusive, collection.getDomsName(), "SummaVisible", "Published", 0, maxDomsResultSize);
+                sinceInclusive.getTime(), collection.getDomsName(), "SummaVisible", "Published", 0, maxDomsResultSize);
     }
 
     public void markInProgressObject(String objectId) throws MethodFailedException, InvalidResourceException, InvalidCredentialsException {
@@ -79,5 +80,9 @@ public class DOMSClient {
     public boolean isActive(String objectId) throws MethodFailedException, InvalidResourceException, InvalidCredentialsException {
         String state = getCentralWebservice().getObjectProfile(objectId).getState();
         return "A".equals(state);
+    }
+
+    public int getMaxDomsResultSize() {
+        return maxDomsResultSize;
     }
 }
