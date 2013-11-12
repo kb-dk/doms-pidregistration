@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>dk.statsbiblioteket.pidregistration</groupId>
   <artifactId>doms-pidregistration</artifactId>
-  <version>1.0.8-SNAPSHOT</version>
+  <version>1.0.7-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>doms-pidregistration</name>
 
