@@ -24,6 +24,9 @@ public class DOMSClient {
             "http://central.doms.statsbiblioteket.dk/",
             "CentralWebserviceService");
 
+    private static final String CONNECT_TIMEOUT = "com.sun.xml.ws.connect.timeout";
+    private static final String REQUEST_TIMEOUT = "com.sun.xml.ws.request.timeout";
+
     private static final String DC_DATASTREAM_ID = "DC";
 
     private PropertyBasedRegistrarConfiguration configuration;
@@ -46,10 +49,11 @@ public class DOMSClient {
             centralWebservice =
                     new CentralWebserviceService(configuration.getDomsWSAPIEndpoint(), CENTRAL_WEBSERVICE_SERVICE)
                             .getCentralWebservicePort();
-            Map<String, Object> domsAPILogin = ((BindingProvider) centralWebservice)
-                    .getRequestContext();
-            domsAPILogin.put(BindingProvider.USERNAME_PROPERTY, configuration.getUsername());
-            domsAPILogin.put(BindingProvider.PASSWORD_PROPERTY, configuration.getPassword());
+            Map<String, Object> context = ((BindingProvider) centralWebservice).getRequestContext();
+            context.put(BindingProvider.USERNAME_PROPERTY, configuration.getUsername());
+            context.put(BindingProvider.PASSWORD_PROPERTY, configuration.getPassword());
+            context.put(CONNECT_TIMEOUT, configuration.getDomsWSAPIEndpointTimeout());
+            context.put(REQUEST_TIMEOUT, configuration.getDomsWSAPIEndpointTimeout());
         }
         return centralWebservice;
     }

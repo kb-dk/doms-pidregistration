@@ -26,6 +26,7 @@ public class PropertyBasedRegistrarConfiguration {
     public static final String USER_NAME_KEY = "doms-pidregistration.userName";
     public static final String PASSWORD_KEY = "doms-pidregistration.password";
     public static final String DOMS_WS_API_ENDPOINT_KEY = "doms-pidregistration.domsWSAPIEndpoint";
+    public static final String DOMS_WS_API_ENDPOINT_TIMEOUT_KEY = "doms-pidregistration.domsWSAPIEndpointTimeoutInMillis";
     public static final String HANDLE_PREFIX_KEY = "doms-pidregistration.handlePrefix";
     public static final String PRIVATE_KEY_PATH = "doms-pidregistration.privateKeyPath";
     public static final String PRIVATE_KEY_PASSWORD = "doms-pidregistration.privateKeyPassword";
@@ -76,6 +77,14 @@ public class PropertyBasedRegistrarConfiguration {
             return new URL(properties.getProperty(DOMS_WS_API_ENDPOINT_KEY));
         } catch (MalformedURLException e) {
             throw new InitializationFailedException("Invalid property for '" + DOMS_WS_API_ENDPOINT_KEY + "'", e);
+        }
+    }
+
+    public int getDomsWSAPIEndpointTimeout() {
+        try {
+            return Integer.parseInt(properties.getProperty(DOMS_WS_API_ENDPOINT_TIMEOUT_KEY));
+        } catch (NumberFormatException e) {
+            throw new InitializationFailedException("Invalid property for '" + DOMS_WS_API_ENDPOINT_TIMEOUT_KEY + "'", e);
         }
     }
 
