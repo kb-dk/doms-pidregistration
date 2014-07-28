@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -93,11 +94,17 @@ public class PIDRegistrations {
             while (!queryResult.isEmpty()) {
                 beginTransaction();
 
-                List<JobDTO> jobsToBeAdded = buildJobs(collection, queryResult.getObjectIds());
+                Set<String> distinctObjectIds = new HashSet<String>(queryResult.getObjectIds());
+                List<JobDTO> jobsToBeAdded = buildNewJobs(collection, distinctObjectIds);
+
                 if (isTestMode() && jobsToBeAdded.size() > numberOfObjectsToTest) {
                     jobsToBeAdded = jobsToBeAdded.subList(0, numberOfObjectsToTest);
                 }
-                jobsDao.save(jobsToBeAdded);
+
+                if (!jobsToBeAdded.isEmpty()) {
+                    jobsDao.save(jobsToBeAdded);
+                }
+
                 sinceInclusive = queryResult.getLatestRead();
                 updateTimestamp(collection, sinceInclusive);
 
@@ -125,16 +132,20 @@ public class PIDRegistrations {
             }
         }
         log.info("Added {} jobs", jobCount);
-        log.info("Adding handles");
-        JobDTO jobDto;
 
+        JobDTO jobDto;
         while ((jobDto = jobsDao.findJobError()) != null) {
             jobDto.setState(JobDTO.State.PENDING);
             jobsDao.update(jobDto);
         }
 
-        while ((jobDto = jobsDao.findJobPending()) != null) {
-            handleObject(jobDto);
+        log.info("Adding handles");
+        if (isTestMode()) {
+            log.info("Script in test mode. Not adding handles");
+        } else {
+            while ((jobDto = jobsDao.findJobPending()) != null) {
+                handleObject(jobDto);
+            }
         }
 
         String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
@@ -223,7 +234,7 @@ public class PIDRegistrations {
         }
     }
 
-    private List<JobDTO> buildJobs(Collection collection, List<String> objectIds) {
+    private List<JobDTO> buildNewJobs(Collection collection, Set<String> objectIds) {
         List<JobDTO> result = new ArrayList<JobDTO>();
         for (String objectId : objectIds) {
             if (jobsDao.findJobWithUUID(objectId) != null) {

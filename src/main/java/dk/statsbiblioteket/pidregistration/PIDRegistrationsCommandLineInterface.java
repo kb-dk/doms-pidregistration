@@ -41,10 +41,6 @@ public class PIDRegistrationsCommandLineInterface {
                     numberOfObjectsToTest);
 
             pidRegistrations.doRegistrations();
-
-            if (numberOfObjectsToTest != null) {
-                pidRegistrations.doUnregistrations();
-            }
         } catch (Exception e) {
             System.err.println("Error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             e.printStackTrace();
