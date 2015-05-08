@@ -36,7 +36,7 @@
         <xsd:schema>
             <xsd:import
                     namespace="http://central.doms.statsbiblioteket.dk/"
-                    schemaLocation="centralWebservice.xsd"/>
+                    schemaLocation="centralwebservice.xsd"/>
         </xsd:schema>
     </types>
 
