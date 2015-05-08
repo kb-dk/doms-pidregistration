@@ -3,6 +3,10 @@ Release history for the doms-pidregistration project.
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
 
+1.0.9 released 2015-05-08
+ * Use newest sbutil
+ * Use newest wsdl to doms
+
 1.0.8 released 2014-07-29
  * Added configurable timeout for DOMS WS connection
  * Handled that getIDsModified will return the same ID more than once if the object has been modified more than once since the given cutoff date
