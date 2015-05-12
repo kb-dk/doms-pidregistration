@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>dk.statsbiblioteket.pidregistration</groupId>
   <artifactId>doms-pidregistration</artifactId>
-  <version>1.0.9</version>
+  <version>1.0.9-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>doms-pidregistration</name>
 
@@ -14,9 +14,9 @@
 
   <scm>
     <connection>scm:git:https://github.com/statsbiblioteket/doms-pidregistration.git</connection>
-    <developerConnection>scm:git:https://github.com/statsbiblioteket/doms-pidregistration.git</developerConnection>
+    <developerConnection>scm:git:ssh:git@github.com/statsbiblioteket/doms-pidregistration</developerConnection>
     <url>https://github.com/statsbiblioteket/doms-pidregistration</url>
-    <tag>doms-pidregistration-1.0.9</tag>
+    <tag>HEAD</tag>
   </scm>
   <repositories>
     <repository>
