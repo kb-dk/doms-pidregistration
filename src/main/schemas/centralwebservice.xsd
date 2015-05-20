@@ -388,6 +388,7 @@
             <xs:element name="entryContentModelPid" type="xs:string"/>
             <xs:element name="collectionPid" type="xs:string"/>
             <xs:element name="date" type="xs:long"/>
+            <xs:element name="recorddate" type="xs:long"/>
             <xs:element name="state" type="xs:string"/>
         </xs:sequence>
     </xs:complexType>
