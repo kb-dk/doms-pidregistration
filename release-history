@@ -3,6 +3,9 @@ Release history for the doms-pidregistration project.
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
 
+1.0.10 released 2015-08-27
+ * Use newest wsdl to doms
+
 1.0.9 released 2015-05-08
  * Use newest sbutil
  * Use newest wsdl to doms
