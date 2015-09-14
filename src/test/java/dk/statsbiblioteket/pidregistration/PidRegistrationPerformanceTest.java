@@ -29,8 +29,9 @@ public class PidRegistrationPerformanceTest {
     @Mocked
     private DOMSObjectIDQueryer domsObjectIdQueryer = null;
 
+    private boolean inTestmode = false;
     private DOMSClient domsClient = new DOMSClient(CONFIG);
-    private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG);
+    private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG, inTestmode);
     private PIDRegistrations pidRegistrations;
 
     private static final String REKLAME_ID = "reklamefilm";

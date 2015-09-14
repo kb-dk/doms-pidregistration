@@ -55,7 +55,8 @@ public class PIDRegistrationsIntegrationTest {
     private DOMSClient domsClient = new DOMSClient(CONFIG);
     private DOMSMetadataQueryer domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
     private DOMSUpdater domsUpdater = new DOMSUpdater(domsClient);
-    private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG);
+    private boolean isInTestmode = true;
+    private GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(CONFIG, isInTestmode);
     private Map<String, DOMSMetadata> domsOriginals = new HashMap<String, DOMSMetadata>();
 
     private static final String REKLAME_ID = "reklamefilm";
