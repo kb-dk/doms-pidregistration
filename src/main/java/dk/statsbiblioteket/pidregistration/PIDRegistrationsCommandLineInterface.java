@@ -34,10 +34,17 @@ public class PIDRegistrationsCommandLineInterface {
 
             Integer numberOfObjectsToTest = line.hasOption("t") ? Integer.parseInt(line.getOptionValue("t")) : null;
 
+            GlobalHandleRegistry handleRegistry;
+            if(line.hasOption("t")) {
+                handleRegistry = null;
+            } else {
+                handleRegistry = new GlobalHandleRegistry(config);
+            }
+            
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     new DOMSClient(config),
-                    new GlobalHandleRegistry(config),
+                    handleRegistry,
                     numberOfObjectsToTest);
 
             pidRegistrations.doRegistrations();
