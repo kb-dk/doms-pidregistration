@@ -33,18 +33,12 @@ public class PIDRegistrationsCommandLineInterface {
                     new File(System.getProperty("user.home"), "doms-pidregistration.properties"));
 
             Integer numberOfObjectsToTest = line.hasOption("t") ? Integer.parseInt(line.getOptionValue("t")) : null;
-
-            GlobalHandleRegistry handleRegistry;
-            if(line.hasOption("t")) {
-                handleRegistry = null;
-            } else {
-                handleRegistry = new GlobalHandleRegistry(config);
-            }
+            boolean isInTestmode = line.hasOption("t");
             
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     new DOMSClient(config),
-                    handleRegistry,
+                    new GlobalHandleRegistry(config, isInTestmode),
                     numberOfObjectsToTest);
 
             pidRegistrations.doRegistrations();

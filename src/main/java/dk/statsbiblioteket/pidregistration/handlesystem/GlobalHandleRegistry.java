@@ -31,12 +31,17 @@ public class GlobalHandleRegistry {
     private HandleResolver handleResolver;
     private HandleRequestBuilder handleRequestBuilder;
 
-    public GlobalHandleRegistry(PropertyBasedRegistrarConfiguration config) {
+    public GlobalHandleRegistry(PropertyBasedRegistrarConfiguration config, boolean inTestmode) {
         this.config = config;
         String adminId = ADMIN_ID_PREFIX + config.getHandlePrefix();
 
-        PublicKeyAuthenticationInfo pubKeyAuthInfo = new PublicKeyAuthenticationInfo(
+        PublicKeyAuthenticationInfo pubKeyAuthInfo;
+        if(inTestmode) {
+            pubKeyAuthInfo = null;
+        } else {
+            pubKeyAuthInfo = new PublicKeyAuthenticationInfo(
                 adminId.getBytes(DEFAULT_ENCODING), ADMIN_ID_INDEX, loadPrivateKey());
+        }
 
         handleResolver = new HandleResolver();
         handleRequestBuilder = new HandleRequestBuilder(adminId,

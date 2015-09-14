@@ -7,7 +7,6 @@ import mockit.NonStrictExpectations;
 import mockit.Verifications;
 import net.handle.hdllib.HandleValue;
 import org.junit.Test;
-import org.junit.Ignore;
 
 public class GlobalHandleRegistryTest {
     private static final PIDHandle PID = new PIDHandle("109.3.1", "uuid:663d0baa-c08f-4b6e-bd07-35ec0b382ebb");
@@ -18,10 +17,10 @@ public class GlobalHandleRegistryTest {
             = new PropertyBasedRegistrarConfiguration(
             getClass().getResourceAsStream("/doms-pidregistration.properties"));
 
+    private boolean inTestmode = true;
     @Mocked(methods = "registerPid(PIDHandle, String)", inverse = true)
-    private GlobalHandleRegistry globalHandleRegistry = new GlobalHandleRegistry(config);
+    private GlobalHandleRegistry globalHandleRegistry = new GlobalHandleRegistry(config, inTestmode);
 
-    @Ignore("Disabled as it uses the real handle registry")
     @Test
     public void testCreateNewPidRegistration() {
         new NonStrictExpectations() {
@@ -41,7 +40,6 @@ public class GlobalHandleRegistryTest {
         };
     }
 
-    @Ignore("Disabled as it uses the real handle registry")
     @Test
     public void testAddUrlToPid() {
         new NonStrictExpectations() {
@@ -61,7 +59,6 @@ public class GlobalHandleRegistryTest {
         };
     }
     
-    @Ignore("Disabled as it uses the real handle registry")
     @Test
     public void testReplaceUrlAtPidWithDifferentUrl() {
         new NonStrictExpectations() {
@@ -82,7 +79,6 @@ public class GlobalHandleRegistryTest {
         };
     }
     
-    @Ignore("Disabled as it uses the real handle registry")
     @Test
     public void testThatReplacingUrlAtPidWithSameUrlDoesNothing() {
         new NonStrictExpectations() {
