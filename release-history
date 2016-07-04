@@ -3,6 +3,9 @@ Release history for the doms-pidregistration project.
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
 
+1.0.8.3 released 2016-07-04
+ * Change to jre7 edition of postgres JDBC driver - fixes broken 1.0.8.2 release
+
 1.0.8.2 released 2016-07-04
  * Update postgres JDBC driver to newest version (9.4.1208)
 
