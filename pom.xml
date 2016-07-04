@@ -198,4 +198,9 @@
       </plugin>
     </plugins>
   </build>
+
+  <properties>
+    <additionalparam>-Xdoclint:none</additionalparam>
+  </properties>
+
 </project>
