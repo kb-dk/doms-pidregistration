@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,6 +31,7 @@ import java.util.Set;
  */
 public class PIDRegistrations {
     private static final Logger log = LoggerFactory.getLogger(PIDRegistrations.class);
+    private final DOMSObjectIDQueryer domsObjectIdQueryer;
 
     private int success = 0;
     private int failure = 0;
@@ -49,15 +51,17 @@ public class PIDRegistrations {
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
-            GlobalHandleRegistry handleRegistry) {
-        this(configuration, domsClient, handleRegistry, null);
+            GlobalHandleRegistry handleRegistry,
+            DOMSObjectIDQueryer domsObjectIdQueryer) {
+        this(configuration, domsClient, handleRegistry, null, domsObjectIdQueryer);
     }
 
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
             GlobalHandleRegistry handleRegistry,
-            Integer numberOfObjectsToTest) {
+            Integer numberOfObjectsToTest, DOMSObjectIDQueryer domsObjectIdQueryer
+            ) {
         this.configuration = configuration;
         this.domsClient = domsClient;
         this.handleRegistry = handleRegistry;
@@ -65,6 +69,7 @@ public class PIDRegistrations {
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
         domsUpdater = new DOMSUpdater(domsClient);
+        this.domsObjectIdQueryer = domsObjectIdQueryer;
     }
 
     /**
@@ -81,7 +86,6 @@ public class PIDRegistrations {
 
         setupConnection();
 
-        DOMSObjectIDQueryer domsObjectIdQueryer = new DOMSObjectIDQueryer(domsClient);
 
         Set<Collection> collections = configuration.getDomsCollections();
 
@@ -259,7 +263,6 @@ public class PIDRegistrations {
     private void updateTimestamp(Collection collection, Date timestamp) {
         collectionTimestampsDao.update(collection, timestamp);
     }
-
 
     private void handleObject(JobDTO jobDto) {
         try {

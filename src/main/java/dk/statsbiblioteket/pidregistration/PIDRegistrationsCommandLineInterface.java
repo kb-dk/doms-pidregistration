@@ -2,6 +2,7 @@ package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -34,12 +35,13 @@ public class PIDRegistrationsCommandLineInterface {
 
             Integer numberOfObjectsToTest = line.hasOption("t") ? Integer.parseInt(line.getOptionValue("t")) : null;
             boolean isInTestmode = line.hasOption("t");
-            
+
+            DOMSClient domsClient = new DOMSClient(config);
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
-                    new DOMSClient(config),
+                    domsClient,
                     new GlobalHandleRegistry(config, isInTestmode),
-                    numberOfObjectsToTest);
+                    numberOfObjectsToTest, new DOMSObjectIDQueryer(domsClient));
 
             pidRegistrations.doRegistrations();
         } catch (Exception e) {

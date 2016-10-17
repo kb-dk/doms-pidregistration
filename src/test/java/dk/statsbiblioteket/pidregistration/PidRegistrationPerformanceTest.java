@@ -53,7 +53,7 @@ public class PidRegistrationPerformanceTest {
 
         new DatabaseSchema(CONFIG).removeIfExists();
 
-        pidRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry);
+        pidRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIdQueryer);
 
         long start = System.currentTimeMillis();
         pidRegistrations.doRegistrations();
