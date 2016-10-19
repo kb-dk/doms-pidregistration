@@ -4,6 +4,7 @@ import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarC
 import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import mockit.Mocked;
 import mockit.NonStrictExpectations;
@@ -53,7 +54,7 @@ public class PidRegistrationPerformanceTest {
 
         new DatabaseSchema(CONFIG).removeIfExists();
 
-        pidRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIdQueryer);
+        pidRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIdQueryer, new DOMSUpdater(domsClient));
 
         long start = System.currentTimeMillis();
         pidRegistrations.doRegistrations();

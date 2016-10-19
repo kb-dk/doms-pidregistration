@@ -15,6 +15,7 @@ import net.handle.hdllib.HandleResolver;
 import net.handle.hdllib.PublicKeyAuthenticationInfo;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.xml.transform.TransformerException;
@@ -39,7 +40,7 @@ import static org.mockito.Mockito.*;
  * NOTE: This test will _only_ work if the fedora mentioned in the test
  * config is available and contains the expected data.
  */
-//@Ignore
+@Ignore
 public class PIDRegistrationsIntegrationTest {
     private static final PropertyBasedRegistrarConfiguration CONFIG
             = new PropertyBasedRegistrarConfiguration(
@@ -83,7 +84,7 @@ public class PIDRegistrationsIntegrationTest {
 
         new DatabaseSchema(CONFIG).removeIfExists();
 
-        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIDQueryer);
+        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIDQueryer, new DOMSUpdater(domsClient));
 
         List<String> idsToBePutInDoms = new ArrayList<String>();
         idsToBePutInDoms.addAll(AVIS_IDS_UNDER_TEST);
@@ -134,7 +135,7 @@ public class PIDRegistrationsIntegrationTest {
         new DatabaseSchema(CONFIG).removeIfExists();
 
         GlobalHandleRegistry handleRegistry = mock(GlobalHandleRegistry.class);
-        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIDQueryer);
+        PIDRegistrations PIDRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIDQueryer, new DOMSUpdater(domsClient));
 
         List<String> idsToBePutInDoms = new ArrayList<String>();
         idsToBePutInDoms.addAll(AVIS_IDS_UNDER_TEST);

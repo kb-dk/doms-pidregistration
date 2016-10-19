@@ -25,23 +25,26 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.*;
 
 /**
  * Main batch job. Does all the work related to the registration of PIDs in DOMS and in the Global Handle Registry
  */
 public class PIDRegistrations {
     private static final Logger log = LoggerFactory.getLogger(PIDRegistrations.class);
+    private static final int JOBS_QUEUE_LIMIT = 10000;
     private final DOMSObjectIDQueryer domsObjectIdQueryer;
 
     private int success = 0;
     private int failure = 0;
 
-    private PropertyBasedRegistrarConfiguration configuration;
-    private GlobalHandleRegistry handleRegistry;
+    private final PropertyBasedRegistrarConfiguration configuration;
+    private final GlobalHandleRegistry handleRegistry;
 
-    private DOMSClient domsClient;
-    private DOMSMetadataQueryer domsMetadataQueryer;
-    private DOMSUpdater domsUpdater;
+    private final DOMSClient domsClient;
+    private final DOMSMetadataQueryer domsMetadataQueryer;
+    private final DOMSUpdater domsUpdater;
+
     private Connection connection;
     private JobsDAO jobsDao;
     private CollectionTimestampsDAO collectionTimestampsDao;
@@ -51,25 +54,35 @@ public class PIDRegistrations {
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
-            GlobalHandleRegistry handleRegistry,
-            DOMSObjectIDQueryer domsObjectIdQueryer) {
-        this(configuration, domsClient, handleRegistry, null, domsObjectIdQueryer);
+            GlobalHandleRegistry handleRegistry) {
+        this(configuration, domsClient, handleRegistry, new DOMSObjectIDQueryer(domsClient), new DOMSUpdater(domsClient));
     }
 
+    // For PIDRegistrationsCommandLineInterface
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
             GlobalHandleRegistry handleRegistry,
-            Integer numberOfObjectsToTest, DOMSObjectIDQueryer domsObjectIdQueryer
-            ) {
+            Integer numberOfObjectsToTest) {
+        this(configuration, domsClient, handleRegistry, new DOMSObjectIDQueryer(domsClient), new DOMSUpdater(domsClient));
+        this.numberOfObjectsToTest = numberOfObjectsToTest;
+    }
+
+    // For testing
+    public PIDRegistrations(
+            PropertyBasedRegistrarConfiguration configuration,
+            DOMSClient domsClient,
+            GlobalHandleRegistry handleRegistry,
+            DOMSObjectIDQueryer domsObjectIdQueryer,
+            DOMSUpdater domsUpdater
+    ) {
         this.configuration = configuration;
         this.domsClient = domsClient;
         this.handleRegistry = handleRegistry;
-        this.numberOfObjectsToTest = numberOfObjectsToTest;
+        this.domsObjectIdQueryer = domsObjectIdQueryer;
+        this.domsUpdater = domsUpdater;
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
-        domsUpdater = new DOMSUpdater(domsClient);
-        this.domsObjectIdQueryer = domsObjectIdQueryer;
     }
 
     /**
@@ -122,8 +135,8 @@ public class PIDRegistrations {
 
                 if (queryResult.getObjectIds().size() < domsClient.getMaxDomsResultSize()) {
                     log.debug("DOMS client returned {} objects which is less than the max result size of {}. Assuming no more objects.",
-                              queryResult.getObjectIds().size(),
-                              domsClient.getMaxDomsResultSize()
+                            queryResult.getObjectIds().size(),
+                            domsClient.getMaxDomsResultSize()
                     );
                     break;
                 }
@@ -147,9 +160,7 @@ public class PIDRegistrations {
         if (isTestMode()) {
             log.info("Script in test mode. Not adding handles");
         } else {
-            while ((jobDto = jobsDao.findJobPending()) != null) {
-                handleObject(jobDto);
-            }
+            handleObjects();
         }
 
         String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
@@ -264,53 +275,52 @@ public class PIDRegistrations {
         collectionTimestampsDao.update(collection, timestamp);
     }
 
-    private void handleObject(JobDTO jobDto) {
-        try {
-            log.info(String.format("Handling object ID '%s'", jobDto.getUuid()));
-            PIDHandle pidHandle = buildHandle(jobDto.getUuid());
-            boolean domsChanged = updateDoms(pidHandle);
-            boolean handleRegistryChanged = handleRegistry.registerPid(
-                    pidHandle,
-                    buildUrl(jobDto.getCollection(), pidHandle)
-            );
+    private void handleObjects() {
 
-            if (domsChanged || handleRegistryChanged) {
-                success++;
+        ExecutorService executor = Executors.newFixedThreadPool(configuration.getNumberOfThreads());
+
+        List<Future<Boolean>> results;
+
+        do {
+            ResultSet pendingJobs = jobsDao.findJobsPending(JOBS_QUEUE_LIMIT);
+
+            results = new ArrayList<>();
+
+            try {
+                while (pendingJobs.next()){
+                    JobDTO jobDto = jobsDao.resultSetToJobDTO(pendingJobs);
+                    Future<Boolean> result = executor.submit(new HandleCall(jobDto, handleRegistry, jobsDao, configuration, domsMetadataQueryer, domsUpdater));
+                    results.add(result);
+
+
+                }
+            } catch (SQLException e) {
+                throw new DatabaseException(e.getNextException());
             }
 
-            jobDto.setState(JobDTO.State.DONE);
-            jobsDao.update(jobDto);
-        } catch (Exception e) {
-            failure++;
+            countHandleSuccess(results);
 
-            jobDto.setState(JobDTO.State.ERROR);
-            jobsDao.update(jobDto);
-            log.error(String.format("Error handling object ID '%s'", jobDto.getUuid()), e);
+        } while (results.size() == JOBS_QUEUE_LIMIT);
+
+        executor.shutdown();
+
+        if (!executor.isTerminated()){
+            executor.shutdownNow();
+        }
+    }
+
+    private void countHandleSuccess(List<Future<Boolean>> results) {
+        for (Future<Boolean> result : results) {
+            try {
+                if (result.get()) success++;
+                else failure ++;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private PIDHandle buildHandle(String objectId) {
         return new PIDHandle(configuration.getHandlePrefix(), objectId);
-    }
-
-    private boolean updateDoms(PIDHandle pidHandle) {
-        String objectId = pidHandle.getId();
-        DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
-        boolean domsChanged = false;
-        if (!metadata.handleExists(pidHandle)) {
-            log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
-            metadata.attachHandle(pidHandle);
-            domsUpdater.update(objectId, metadata);
-            domsChanged = true;
-        } else {
-            log.info(String.format(
-                    "PID handle '%s' already attached to object ID '%s'. Not added to DOMS", pidHandle, objectId
-            ));
-        }
-        return domsChanged;
-    }
-
-    private String buildUrl(Collection collection, PIDHandle handle) {
-        return String.format("%s/%s/%s", configuration.getPidPrefix(), collection.getId(), handle.getId());
     }
 }

@@ -41,7 +41,7 @@ public class PIDRegistrationsCommandLineInterface {
                     config,
                     domsClient,
                     new GlobalHandleRegistry(config, isInTestmode),
-                    numberOfObjectsToTest, new DOMSObjectIDQueryer(domsClient));
+                    numberOfObjectsToTest);
 
             pidRegistrations.doRegistrations();
         } catch (Exception e) {

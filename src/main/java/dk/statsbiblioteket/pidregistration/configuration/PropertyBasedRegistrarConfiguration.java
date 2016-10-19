@@ -36,6 +36,7 @@ public class PropertyBasedRegistrarConfiguration {
     public static final String DATABASE_URL_KEY = "doms-pidregistration.database.url";
     public static final String DATABASE_USERNAME_KEY = "doms-pidregistration.database.username";
     public static final String DATABASE_PASSWORD_KEY = "doms-pidregistration.database.password";
+    public static final String NUMBER_OF_THREADS = "doms-pidregistration.numOfThreads";
 
     public PropertyBasedRegistrarConfiguration(File propertiesFile) {
         try {
@@ -131,5 +132,10 @@ public class PropertyBasedRegistrarConfiguration {
 
     public String getDatabasePassword() {
         return properties.getProperty(DATABASE_PASSWORD_KEY);
+    }
+
+    public int getNumberOfThreads() {
+        String result = properties.getProperty(NUMBER_OF_THREADS);
+        return result == null ? 1 : Integer.parseInt(result);
     }
 }

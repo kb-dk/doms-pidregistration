@@ -57,8 +57,9 @@ public class PropertyBasedRegistrarConfigurationTest extends TestCase {
 
     public void testGetDomsCollections() {
         Set<Collection> expectedSet = new HashSet<Collection>();
-        expectedSet.add(new Collection("radiotv", "doms:RadioTV_Collection"));
-        expectedSet.add(new Collection("reklamefilm", "doms:Collection_Reklamefilm"));
+//        expectedSet.add(new Collection("radiotv", "doms:RadioTV_Collection"));
+//        expectedSet.add(new Collection("reklamefilm", "doms:Collection_Reklamefilm"));
+        expectedSet.add(new Collection("avis", "doms:Newspaper_Collection"));
         assertEquals(expectedSet, config.getDomsCollections());
     }
 }
