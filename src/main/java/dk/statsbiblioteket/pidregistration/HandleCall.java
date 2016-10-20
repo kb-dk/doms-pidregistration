@@ -14,15 +14,17 @@ import java.util.concurrent.Callable;
 
 
 public class HandleCall implements Callable<Boolean> {
-    private static final Logger log = LoggerFactory.getLogger(HandleCall.class);
-    private JobDTO jobDto;
-    private GlobalHandleRegistry handleRegistry;
-    private JobsDAO jobsDAO;
-    private PropertyBasedRegistrarConfiguration configuration;
-    private DOMSMetadataQueryer domsMetadataQueryer;
-    private DOMSUpdater domsUpdater;
+    private final Logger log = LoggerFactory.getLogger(getClass());
+    private final JobDTO jobDto;
+    private final GlobalHandleRegistry handleRegistry;
+    private final JobsDAO jobsDAO;
+    private final PropertyBasedRegistrarConfiguration configuration;
+    private final DOMSMetadataQueryer domsMetadataQueryer;
+    private final DOMSUpdater domsUpdater;
 
-    public HandleCall(JobDTO jobDto, GlobalHandleRegistry handleRegistry, JobsDAO jobsDAO, PropertyBasedRegistrarConfiguration configuration, DOMSMetadataQueryer domsMetadataQueryer, DOMSUpdater domsUpdater) {
+    public HandleCall(JobDTO jobDto, GlobalHandleRegistry handleRegistry, JobsDAO jobsDAO,
+                      PropertyBasedRegistrarConfiguration configuration, DOMSMetadataQueryer domsMetadataQueryer,
+                      DOMSUpdater domsUpdater) {
         this.jobDto = jobDto;
         this.handleRegistry = handleRegistry;
         this.jobsDAO = jobsDAO;
@@ -34,12 +36,14 @@ public class HandleCall implements Callable<Boolean> {
     public Boolean call() {
         boolean succeeded = false;
         try {
-            log.info(String.format("Handling object ID '%s'", jobDto.getUuid()));
-            PIDHandle pidHandle = buildHandle(jobDto.getUuid());
+            log.info("Handling object ID '{}'", jobDto.getUuid());
+            PIDHandle pidHandle = new PIDHandle(configuration.getHandlePrefix(), jobDto.getUuid());
             boolean domsChanged = updateDoms(pidHandle);
+            String url = String.format(
+                    "%s/%s/%s", configuration.getPidPrefix(), jobDto.getCollection().getId(), pidHandle.getId());
             boolean handleRegistryChanged = handleRegistry.registerPid(
                     pidHandle,
-                    buildUrl(jobDto.getCollection(), pidHandle)
+                    url
             );
 
             if (domsChanged || handleRegistryChanged) {
@@ -51,13 +55,9 @@ public class HandleCall implements Callable<Boolean> {
         } catch (Exception e) {
             jobDto.setState(JobDTO.State.ERROR);
             jobsDAO.update(jobDto);
-            log.error(String.format("Error handling object ID '%s'", jobDto.getUuid()), e);
+            log.error("Error handling object ID '{}'", jobDto.getUuid(), e);
         }
         return succeeded;
-    }
-
-    private PIDHandle buildHandle(String objectId) {
-        return new PIDHandle(configuration.getHandlePrefix(), objectId);
     }
 
     private boolean updateDoms(PIDHandle pidHandle) {
@@ -65,19 +65,13 @@ public class HandleCall implements Callable<Boolean> {
         DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
         boolean domsChanged = false;
         if (!metadata.handleExists(pidHandle)) {
-            log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
+            log.debug("Attaching PID handle '{}' to object ID '{}' in DOMS", pidHandle, objectId);
             metadata.attachHandle(pidHandle);
             domsUpdater.update(objectId, metadata);
             domsChanged = true;
         } else {
-            log.info(String.format(
-                    "PID handle '%s' already attached to object ID '%s'. Not added to DOMS", pidHandle, objectId
-            ));
+            log.info("PID handle '{}' already attached to object ID '{}'. Not added to DOMS", pidHandle, objectId);
         }
         return domsChanged;
-    }
-
-    private String buildUrl(Collection collection, PIDHandle handle) {
-        return String.format("%s/%s/%s", configuration.getPidPrefix(), collection.getId(), handle.getId());
     }
 }

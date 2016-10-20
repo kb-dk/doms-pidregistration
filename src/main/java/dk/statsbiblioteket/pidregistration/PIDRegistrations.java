@@ -6,6 +6,7 @@ import dk.statsbiblioteket.pidregistration.database.DatabaseException;
 import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.database.dao.CollectionTimestampsDAO;
 import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
+import dk.statsbiblioteket.pidregistration.database.dao.JobsIterator;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
@@ -18,44 +19,49 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Main batch job. Does all the work related to the registration of PIDs in DOMS and in the Global Handle Registry
  */
 public class PIDRegistrations {
-    private static final Logger log = LoggerFactory.getLogger(PIDRegistrations.class);
     private static final int JOBS_QUEUE_LIMIT = 10000;
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
+
     private final DOMSObjectIDQueryer domsObjectIdQueryer;
-
-    private int success = 0;
-    private int failure = 0;
-
     private final PropertyBasedRegistrarConfiguration configuration;
     private final GlobalHandleRegistry handleRegistry;
-
     private final DOMSClient domsClient;
     private final DOMSMetadataQueryer domsMetadataQueryer;
     private final DOMSUpdater domsUpdater;
+    private final ConnectionFactory connectionFactory;
+
+    private int failure = 0;
+    private int success = 0;
 
     private Connection connection;
     private JobsDAO jobsDao;
-    private CollectionTimestampsDAO collectionTimestampsDao;
 
+    private CollectionTimestampsDAO collectionTimestampsDao;
     private Integer numberOfObjectsToTest;
 
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
             GlobalHandleRegistry handleRegistry) {
-        this(configuration, domsClient, handleRegistry, new DOMSObjectIDQueryer(domsClient), new DOMSUpdater(domsClient));
+        this(configuration, domsClient, handleRegistry, new DOMSObjectIDQueryer(domsClient),
+                new DOMSUpdater(domsClient), new ConnectionFactory(configuration));
     }
 
     // For PIDRegistrationsCommandLineInterface
@@ -64,11 +70,11 @@ public class PIDRegistrations {
             DOMSClient domsClient,
             GlobalHandleRegistry handleRegistry,
             Integer numberOfObjectsToTest) {
-        this(configuration, domsClient, handleRegistry, new DOMSObjectIDQueryer(domsClient), new DOMSUpdater(domsClient));
+        this(configuration, domsClient, handleRegistry, new DOMSObjectIDQueryer(domsClient),
+                new DOMSUpdater(domsClient), new ConnectionFactory(configuration));
         this.numberOfObjectsToTest = numberOfObjectsToTest;
     }
 
-    // For testing
     public PIDRegistrations(
             PropertyBasedRegistrarConfiguration configuration,
             DOMSClient domsClient,
@@ -76,14 +82,29 @@ public class PIDRegistrations {
             DOMSObjectIDQueryer domsObjectIdQueryer,
             DOMSUpdater domsUpdater
     ) {
+        this(configuration, domsClient, handleRegistry, domsObjectIdQueryer, domsUpdater,
+                new ConnectionFactory(configuration));
+    }
+
+    public PIDRegistrations(
+            PropertyBasedRegistrarConfiguration configuration,
+            DOMSClient domsClient,
+            GlobalHandleRegistry handleRegistry,
+            DOMSObjectIDQueryer domsObjectIdQueryer,
+            DOMSUpdater domsUpdater,
+            ConnectionFactory connectionFactory
+    ) {
         this.configuration = configuration;
         this.domsClient = domsClient;
         this.handleRegistry = handleRegistry;
         this.domsObjectIdQueryer = domsObjectIdQueryer;
         this.domsUpdater = domsUpdater;
+        this.connectionFactory = connectionFactory;
 
         domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
     }
+
+
 
     /**
      * 1. For each collection query the DOMS for object IDs after the last modified data in the specific collection
@@ -183,7 +204,7 @@ public class PIDRegistrations {
             try {
                 String objectId = jobDto.getUuid();
                 log.info("Restoring {}", objectId);
-                PIDHandle handle = buildHandle(objectId);
+                PIDHandle handle = new PIDHandle(configuration.getHandlePrefix(), objectId);
 
                 restoreGlobalHandleRegistry(handle);
                 restoreDoms(objectId);
@@ -203,7 +224,7 @@ public class PIDRegistrations {
 
     private void restoreDoms(String objectId) {
         DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
-        metadata.detachHandle(buildHandle(objectId));
+        metadata.detachHandle(new PIDHandle(configuration.getHandlePrefix(), objectId));
         domsUpdater.update(objectId, metadata);
     }
 
@@ -235,9 +256,9 @@ public class PIDRegistrations {
     }
 
     private void setupConnection() {
-        connection = new ConnectionFactory(configuration).createConnection();
-        jobsDao = new JobsDAO(configuration, connection);
-        collectionTimestampsDao = new CollectionTimestampsDAO(configuration, connection);
+        connection = connectionFactory.createConnection();
+        jobsDao = connectionFactory.getJobsDAO();
+        collectionTimestampsDao = connectionFactory.getCollectionTimestampsDAO();
     }
 
     private void teardownConnection() {
@@ -282,20 +303,15 @@ public class PIDRegistrations {
         List<Future<Boolean>> results;
 
         do {
-            ResultSet pendingJobs = jobsDao.findJobsPending(JOBS_QUEUE_LIMIT);
+            JobsIterator pendingJobs = jobsDao.findJobsPending(JOBS_QUEUE_LIMIT);
 
             results = new ArrayList<>();
-
-            try {
-                while (pendingJobs.next()){
-                    JobDTO jobDto = jobsDao.resultSetToJobDTO(pendingJobs);
-                    Future<Boolean> result = executor.submit(new HandleCall(jobDto, handleRegistry, jobsDao, configuration, domsMetadataQueryer, domsUpdater));
-                    results.add(result);
-
-
-                }
-            } catch (SQLException e) {
-                throw new DatabaseException(e.getNextException());
+            JobDTO jobDto;
+            while ((jobDto = pendingJobs.next()) != null){
+                HandleCall handleCall = new HandleCall(
+                        jobDto, handleRegistry, jobsDao, configuration, domsMetadataQueryer, domsUpdater);
+                Future<Boolean> result = executor.submit(handleCall);
+                results.add(result);
             }
 
             countHandleSuccess(results);
@@ -303,8 +319,9 @@ public class PIDRegistrations {
         } while (results.size() == JOBS_QUEUE_LIMIT);
 
         executor.shutdown();
-
-        if (!executor.isTerminated()){
+        try {
+            executor.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
             executor.shutdownNow();
         }
     }
@@ -312,15 +329,15 @@ public class PIDRegistrations {
     private void countHandleSuccess(List<Future<Boolean>> results) {
         for (Future<Boolean> result : results) {
             try {
-                if (result.get()) success++;
-                else failure ++;
+                if (result.get()) {
+                    success++;
+                }
+                else {
+                    failure ++;
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error in thread handling object");
             }
         }
-    }
-
-    private PIDHandle buildHandle(String objectId) {
-        return new PIDHandle(configuration.getHandlePrefix(), objectId);
     }
 }

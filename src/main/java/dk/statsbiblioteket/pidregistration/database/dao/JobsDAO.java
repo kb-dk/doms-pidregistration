@@ -102,7 +102,7 @@ public class JobsDAO {
         return findJob(JobDTO.State.PENDING);
     }
 
-    public ResultSet findJobsPending(int batchSizeLimit) {
+    public JobsIterator findJobsPending(int batchSizeLimit) {
         return findJobs(JobDTO.State.PENDING, batchSizeLimit);
     }
 
@@ -127,13 +127,13 @@ public class JobsDAO {
         }
     }
 
-    public ResultSet findJobs(JobDTO.State state, int batchSizeLimit) {
+    public JobsIterator findJobs(JobDTO.State state, int batchSizeLimit) {
         try {
             PreparedStatement ps = buildPreparedStatement(GET_JOBS_WITH_STATE);
             ps.setString(1, state.getDatabaseStateName());
             ps.setInt(2, batchSizeLimit);
             ResultSet resultSet = ps.executeQuery();
-            return resultSet;
+            return new JobsIterator(resultSet, this);
 
         } catch (SQLException e) {
             throw new DatabaseException(e.getNextException());
