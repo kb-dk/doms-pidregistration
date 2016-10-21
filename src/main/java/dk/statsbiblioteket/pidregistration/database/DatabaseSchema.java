@@ -18,10 +18,10 @@ import java.sql.Statement;
 public class DatabaseSchema {
     private static final Logger log = LoggerFactory.getLogger(DatabaseSchema.class);
 
-    private PropertyBasedRegistrarConfiguration configuration;
+    private ConnectionFactory connectionFactory;
 
-    public DatabaseSchema(PropertyBasedRegistrarConfiguration configuration) {
-        this.configuration = configuration;
+    public DatabaseSchema(ConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
     }
 
     public void createIfNotExist() {
@@ -33,7 +33,7 @@ public class DatabaseSchema {
 
     private boolean exists() {
         try {
-            Connection connection = new ConnectionFactory(configuration).createConnection();
+            Connection connection = connectionFactory.createConnection();
             DatabaseMetaData metadata = connection.getMetaData();
             ResultSet resultSet = metadata.getTables("public", null, null, new String[]{"TABLE"});
             boolean exists = resultSet.next();
@@ -56,7 +56,7 @@ public class DatabaseSchema {
                 script += str + "\n";
             }
             in.close();
-            Connection connection = new ConnectionFactory(configuration).createConnection();
+            Connection connection = connectionFactory.createConnection();
 
             Statement statement = connection.createStatement();
             statement.executeUpdate(script);

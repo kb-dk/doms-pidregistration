@@ -31,7 +31,7 @@ public class DatabasePerformanceTest {
 
     @Test
     public void testPerformance() {
-        DatabaseSchema databaseSchema = new DatabaseSchema(CONFIG);
+        DatabaseSchema databaseSchema = new DatabaseSchema(new ConnectionFactory(CONFIG));
         databaseSchema.removeIfExists();
         databaseSchema.createIfNotExist();
         setupConnection();

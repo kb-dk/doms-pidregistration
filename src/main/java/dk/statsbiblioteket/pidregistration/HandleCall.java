@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Callable;
 
 
-public class HandleCall implements Callable<Boolean> {
+public class HandleCall implements Callable<JobDTO> {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final JobDTO jobDto;
     private final GlobalHandleRegistry handleRegistry;
@@ -33,31 +33,24 @@ public class HandleCall implements Callable<Boolean> {
         this.domsUpdater = domsUpdater;
     }
 
-    public Boolean call() {
-        boolean succeeded = false;
+    public JobDTO call() {
         try {
             log.info("Handling object ID '{}'", jobDto.getUuid());
             PIDHandle pidHandle = new PIDHandle(configuration.getHandlePrefix(), jobDto.getUuid());
-            boolean domsChanged = updateDoms(pidHandle);
+            updateDoms(pidHandle);
             String url = String.format(
                     "%s/%s/%s", configuration.getPidPrefix(), jobDto.getCollection().getId(), pidHandle.getId());
-            boolean handleRegistryChanged = handleRegistry.registerPid(
+            handleRegistry.registerPid(
                     pidHandle,
                     url
             );
-
-            if (domsChanged || handleRegistryChanged) {
-                succeeded = true;
-            }
-
             jobDto.setState(JobDTO.State.DONE);
-            jobsDAO.update(jobDto);
+
         } catch (Exception e) {
             jobDto.setState(JobDTO.State.ERROR);
-            jobsDAO.update(jobDto);
             log.error("Error handling object ID '{}'", jobDto.getUuid(), e);
         }
-        return succeeded;
+        return jobDto;
     }
 
     private boolean updateDoms(PIDHandle pidHandle) {

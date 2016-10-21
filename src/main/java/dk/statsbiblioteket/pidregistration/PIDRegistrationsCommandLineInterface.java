@@ -37,10 +37,12 @@ public class PIDRegistrationsCommandLineInterface {
             boolean isInTestmode = line.hasOption("t");
 
             DOMSClient domsClient = new DOMSClient(config);
+            GlobalHandleRegistry handleRegistry = new GlobalHandleRegistry(config, isInTestmode);
+
             PIDRegistrations pidRegistrations = new PIDRegistrations(
                     config,
                     domsClient,
-                    new GlobalHandleRegistry(config, isInTestmode),
+                    handleRegistry,
                     numberOfObjectsToTest);
 
             pidRegistrations.doRegistrations();

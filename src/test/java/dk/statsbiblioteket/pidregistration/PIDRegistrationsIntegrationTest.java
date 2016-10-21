@@ -1,6 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
 import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
@@ -18,7 +19,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.xml.transform.TransformerException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -55,23 +55,12 @@ public class PIDRegistrationsIntegrationTest {
     private static final List<String> IDS_UNDER_TEST =
             Arrays.asList(FIRST_OBJECT_PID, SECOND_OBJECT_PID);
 
-    private Map<String, DOMSMetadata> domsOriginals = new HashMap<>();
     private DOMSUpdater domsUpdater;
-
-    @Before
-    public void setup() throws TransformerException {
-        domsOriginals = new HashMap<>();
-        String metadata = MetadataGenerator.createDatastream(FIRST_OBJECT_PID, FIRST_OBJECT_METADATA_PATH, Optional.empty());
-        domsOriginals.put(FIRST_OBJECT_PID, new DOMSMetadata(metadata));
-
-        metadata = MetadataGenerator.createDatastream(SECOND_OBJECT_PID, SECOND_OBJECT_METADATA_PATH, Optional.empty());
-        domsOriginals.put(SECOND_OBJECT_PID, new DOMSMetadata(metadata));
-    }
 
     @Test
     public void test_doRegistrations_forObjectsWithoutHandle() throws TransformerException, HandleException {
 
-        new DatabaseSchema(CONFIG).removeIfExists();
+        new DatabaseSchema(new ConnectionFactory(CONFIG)).removeIfExists();
 
         DOMSClient domsClient = new DOMSClient(CONFIG);
         DOMSMetadataQueryer domsMetadataQueryer = new DOMSMetadataQueryer(domsClient);
@@ -105,6 +94,7 @@ public class PIDRegistrationsIntegrationTest {
         }
 
 
+
         PIDRegistrations.doRegistrations();
 
 
@@ -117,16 +107,16 @@ public class PIDRegistrationsIntegrationTest {
         }
 
         verifyNoMoreInteractions(handleRegistry);
-    }
 
-    @After
-    public void teardown() throws HandleException, TransformerException {
+
         restoreDoms();
     }
 
     private void restoreDoms() throws TransformerException {
-        for (String objectId : IDS_UNDER_TEST) {
-            domsUpdater.update(objectId, domsOriginals.get(objectId));
-        }
+        String metadata = MetadataGenerator.createDatastream(FIRST_OBJECT_PID, FIRST_OBJECT_METADATA_PATH, Optional.empty());
+        domsUpdater.update(FIRST_OBJECT_PID, new DOMSMetadata(metadata));
+
+        metadata = MetadataGenerator.createDatastream(SECOND_OBJECT_PID, SECOND_OBJECT_METADATA_PATH, Optional.empty());
+        domsUpdater.update(SECOND_OBJECT_PID, new DOMSMetadata(metadata));
     }
 }

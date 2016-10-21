@@ -23,11 +23,9 @@ public class CollectionTimestampsDAO {
     private static final String UPDATE_COLLECTION_TIMESTAMP =
             "UPDATE collection_timestamps SET latest_read=? where collection=?";
 
-    private PropertyBasedRegistrarConfiguration configuration;
     private Connection connection;
 
-    public CollectionTimestampsDAO(PropertyBasedRegistrarConfiguration configuration, Connection connection) {
-        this.configuration = configuration;
+    public CollectionTimestampsDAO(Connection connection) {
         this.connection = connection;
     }
 

@@ -6,7 +6,6 @@ import dk.statsbiblioteket.pidregistration.database.DatabaseException;
 import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.database.dao.CollectionTimestampsDAO;
 import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
-import dk.statsbiblioteket.pidregistration.database.dao.JobsIterator;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
@@ -23,9 +22,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -49,11 +48,8 @@ public class PIDRegistrations {
 
     private int failure = 0;
     private int success = 0;
+    private int handlesSkipped = 0;
 
-    private Connection connection;
-    private JobsDAO jobsDao;
-
-    private CollectionTimestampsDAO collectionTimestampsDao;
     private Integer numberOfObjectsToTest;
 
     public PIDRegistrations(
@@ -115,79 +111,85 @@ public class PIDRegistrations {
      * build and attach it.
      */
     public void doRegistrations() {
-        DatabaseSchema databaseSchema = new DatabaseSchema(configuration);
+        DatabaseSchema databaseSchema = new DatabaseSchema(connectionFactory);
         databaseSchema.createIfNotExist();
 
-        setupConnection();
+        // Setup connection
+        try (Connection connection = connectionFactory.createConnection()) {
+            JobsDAO jobsDao = connectionFactory.createJobsDAO(connection);
+            CollectionTimestampsDAO collectionTimestampsDao = connectionFactory.createCollectionTimestampsDAO(connection);
 
 
-        Set<Collection> collections = configuration.getDomsCollections();
+            Set<Collection> collections = configuration.getDomsCollections();
 
-        int jobCount = 0;
-        log.info("Adding jobs to database");
-        for (Collection collection : collections) {
-            int jobCountPerCollection = 0;
-            Date sinceInclusive = getOrCreateTimestampFor(collection);
-            DOMSObjectIDQueryResult queryResult = domsObjectIdQueryer.findNextIn(collection, sinceInclusive);
-            while (!queryResult.isEmpty()) {
-                beginTransaction();
+            int jobCount = 0;
+            log.info("Adding jobs to database");
+            for (Collection collection : collections) {
+                int jobCountPerCollection = 0;
+                Date sinceInclusive = getOrCreateTimestampForCollection(collectionTimestampsDao, collection);
+                DOMSObjectIDQueryResult queryResult = domsObjectIdQueryer.findNextIn(collection, sinceInclusive);
+                while (!queryResult.isEmpty()) {
+                    beginTransaction(connection);
 
-                Set<String> distinctObjectIds = new HashSet<String>(queryResult.getObjectIds());
-                List<JobDTO> jobsToBeAdded = buildNewJobs(collection, distinctObjectIds);
+                    Set<String> distinctObjectIds = new HashSet<String>(queryResult.getObjectIds());
+                    List<JobDTO> jobsToBeAdded = buildNewJobs(jobsDao, collection, distinctObjectIds);
 
-                if (isTestMode() && jobsToBeAdded.size() > numberOfObjectsToTest) {
-                    jobsToBeAdded = jobsToBeAdded.subList(0, numberOfObjectsToTest);
+                    if (isTestMode() && jobsToBeAdded.size() > numberOfObjectsToTest) {
+                        jobsToBeAdded = jobsToBeAdded.subList(0, numberOfObjectsToTest);
+                    }
+
+                    if (!jobsToBeAdded.isEmpty()) {
+                        jobsDao.save(jobsToBeAdded);
+                    }
+
+                    sinceInclusive = queryResult.getLatestRead();
+                    updateTimestamp(collectionTimestampsDao, collection, sinceInclusive);
+
+                    commitTransaction(connection);
+
+                    int jobsAdded = jobsToBeAdded.size();
+
+                    jobCountPerCollection += jobsAdded;
+                    jobCount += jobsAdded;
+                    log.info("Jobs added so far: {}", jobCount);
+
+                    if (queryResult.getObjectIds().size() < domsClient.getMaxDomsResultSize()) {
+                        log.debug("DOMS client returned {} objects which is less than the max result size of {}. " +
+                                        "Assuming no more objects.",
+                                queryResult.getObjectIds().size(),
+                                domsClient.getMaxDomsResultSize()
+                        );
+                        break;
+                    }
+
+                    if (isTestMode() && jobCountPerCollection >= numberOfObjectsToTest) {
+                        break;
+                    }
+
+                    queryResult = domsObjectIdQueryer.findNextIn(collection, sinceInclusive);
                 }
-
-                if (!jobsToBeAdded.isEmpty()) {
-                    jobsDao.save(jobsToBeAdded);
-                }
-
-                sinceInclusive = queryResult.getLatestRead();
-                updateTimestamp(collection, sinceInclusive);
-
-                commitTransaction();
-
-                int jobsAdded = jobsToBeAdded.size();
-
-                jobCountPerCollection += jobsAdded;
-                jobCount += jobsAdded;
-                log.info("Jobs added so far: {}", jobCount);
-
-                if (queryResult.getObjectIds().size() < domsClient.getMaxDomsResultSize()) {
-                    log.debug("DOMS client returned {} objects which is less than the max result size of {}. Assuming no more objects.",
-                            queryResult.getObjectIds().size(),
-                            domsClient.getMaxDomsResultSize()
-                    );
-                    break;
-                }
-
-                if (isTestMode() && jobCountPerCollection >= numberOfObjectsToTest) {
-                    break;
-                }
-
-                queryResult = domsObjectIdQueryer.findNextIn(collection, sinceInclusive);
             }
+            log.info("Added {} jobs", jobCount);
+
+            JobDTO jobDto;
+            while ((jobDto = jobsDao.findJobError()) != null) {
+                jobDto.setState(JobDTO.State.PENDING);
+                jobsDao.update(jobDto);
+            }
+
+            log.info("Adding handles");
+            if (isTestMode()) {
+                log.info("Script in test mode. Not adding handles");
+            } else {
+                handleObjects(jobsDao);
+            }
+
+            String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
+            log.info(message);
+
+        } catch (SQLException e) {
+            log.error("Error when trying to close connection to database", e);
         }
-        log.info("Added {} jobs", jobCount);
-
-        JobDTO jobDto;
-        while ((jobDto = jobsDao.findJobError()) != null) {
-            jobDto.setState(JobDTO.State.PENDING);
-            jobsDao.update(jobDto);
-        }
-
-        log.info("Adding handles");
-        if (isTestMode()) {
-            log.info("Script in test mode. Not adding handles");
-        } else {
-            handleObjects();
-        }
-
-        String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
-        log.info(message);
-
-        teardownConnection();
     }
 
     private boolean isTestMode() {
@@ -195,31 +197,35 @@ public class PIDRegistrations {
     }
 
     public void doUnregistrations() {
-        setupConnection();
+        try (Connection connection = connectionFactory.createConnection()){
+            JobsDAO jobsDao = connectionFactory.createJobsDAO(connection);
 
-        log.info("Restoring DOMS and global handle registry to previous state...");
-        JobDTO jobDto;
-        int errors = 0;
-        while ((jobDto = jobsDao.findJobDone()) != null) {
-            try {
-                String objectId = jobDto.getUuid();
-                log.info("Restoring {}", objectId);
-                PIDHandle handle = new PIDHandle(configuration.getHandlePrefix(), objectId);
+            log.info("Restoring DOMS and global handle registry to previous state...");
+            JobDTO jobDto;
+            int errors = 0;
+            while ((jobDto = jobsDao.findJobDone()) != null) {
+                try {
+                    String objectId = jobDto.getUuid();
+                    log.info("Restoring {}", objectId);
+                    PIDHandle handle = new PIDHandle(configuration.getHandlePrefix(), objectId);
 
-                restoreGlobalHandleRegistry(handle);
-                restoreDoms(objectId);
+                    restoreGlobalHandleRegistry(handle);
+                    restoreDoms(objectId);
 
-                jobDto.setState(JobDTO.State.DELETED);
-                jobsDao.update(jobDto);
-            } catch (Exception e) {
-                errors++;
-                log.error("Error when trying to restore {}", jobDto.getUuid(), e);
-                jobDto.setState(JobDTO.State.ERROR);
-                jobsDao.update(jobDto);
+                    jobDto.setState(JobDTO.State.DELETED);
+                    jobsDao.update(jobDto);
+                } catch (Exception e) {
+                    errors++;
+                    log.error("Error when trying to restore {}", jobDto.getUuid(), e);
+                    jobDto.setState(JobDTO.State.ERROR);
+                    jobsDao.update(jobDto);
+                }
             }
+            log.info("{} errors encountered unregistrating objects IDs", errors);
+
+        } catch (SQLException e) {
+            log.error("Error when trying to close connection to database", e);
         }
-        log.info("{} errors encountered unregistrating objects IDs", errors);
-        teardownConnection();
     }
 
     private void restoreDoms(String objectId) {
@@ -232,7 +238,7 @@ public class PIDRegistrations {
         handleRegistry.deletePid(handle);
     }
 
-    private void beginTransaction() {
+    private void beginTransaction(Connection connection) {
         try {
             connection.setAutoCommit(false);
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -241,7 +247,7 @@ public class PIDRegistrations {
         }
     }
 
-    private void commitTransaction() {
+    private void commitTransaction(Connection connection) {
         try {
             connection.commit();
             connection.setAutoCommit(true);
@@ -255,22 +261,7 @@ public class PIDRegistrations {
         }
     }
 
-    private void setupConnection() {
-        connection = connectionFactory.createConnection();
-        jobsDao = connectionFactory.getJobsDAO();
-        collectionTimestampsDao = connectionFactory.getCollectionTimestampsDAO();
-    }
-
-    private void teardownConnection() {
-        try {
-            jobsDao = null;
-            connection.close();
-        } catch (SQLException e) {
-            throw new DatabaseException(e);
-        }
-    }
-
-    private List<JobDTO> buildNewJobs(Collection collection, Set<String> objectIds) {
+    private List<JobDTO> buildNewJobs(JobsDAO jobsDao, Collection collection, Set<String> objectIds) {
         List<JobDTO> result = new ArrayList<JobDTO>();
         for (String objectId : objectIds) {
             if (jobsDao.findJobWithUUID(objectId) != null) {
@@ -283,7 +274,7 @@ public class PIDRegistrations {
         return result;
     }
 
-    private Date getOrCreateTimestampFor(Collection collection) {
+    private Date getOrCreateTimestampForCollection(CollectionTimestampsDAO collectionTimestampsDao, Collection collection) {
         Date result = collectionTimestampsDao.load(collection);
         if (result == null) {
             result = new Date(0L);
@@ -292,29 +283,31 @@ public class PIDRegistrations {
         return result;
     }
 
-    private void updateTimestamp(Collection collection, Date timestamp) {
+    private void updateTimestamp(CollectionTimestampsDAO collectionTimestampsDao, Collection collection, Date timestamp) {
         collectionTimestampsDao.update(collection, timestamp);
     }
 
-    private void handleObjects() {
+    private void handleObjects(JobsDAO jobsDao) {
 
-        ExecutorService executor = Executors.newFixedThreadPool(configuration.getNumberOfThreads());
+        int numberOfThreads = configuration.getNumberOfThreads();
+        ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
 
-        List<Future<Boolean>> results;
+        List<Future<JobDTO>> results;
 
         do {
-            JobsIterator pendingJobs = jobsDao.findJobsPending(JOBS_QUEUE_LIMIT);
+            Iterator<JobDTO> pendingJobs = jobsDao.findJobsPending(JOBS_QUEUE_LIMIT);
 
             results = new ArrayList<>();
-            JobDTO jobDto;
-            while ((jobDto = pendingJobs.next()) != null){
+
+            while (pendingJobs.hasNext()) {
+                JobDTO jobDto = pendingJobs.next();
                 HandleCall handleCall = new HandleCall(
                         jobDto, handleRegistry, jobsDao, configuration, domsMetadataQueryer, domsUpdater);
-                Future<Boolean> result = executor.submit(handleCall);
+                Future<JobDTO> result = executor.submit(handleCall);
                 results.add(result);
             }
 
-            countHandleSuccess(results);
+            countHandleSuccess(results, jobsDao);
 
         } while (results.size() == JOBS_QUEUE_LIMIT);
 
@@ -326,17 +319,23 @@ public class PIDRegistrations {
         }
     }
 
-    private void countHandleSuccess(List<Future<Boolean>> results) {
-        for (Future<Boolean> result : results) {
+    private void countHandleSuccess(List<Future<JobDTO>> results, JobsDAO jobsDAO) {
+        for (Future<JobDTO> result : results) {
             try {
-                if (result.get()) {
+                JobDTO jobDto = result.get();
+                jobsDAO.update(jobDto);
+
+                if(jobDto.getState().equals(JobDTO.State.DONE)){
                     success++;
                 }
                 else {
-                    failure ++;
+                    failure++;
                 }
+
             } catch (Exception e) {
-                log.error("Error in thread handling object");
+                // TODO: Throw exception?
+                log.error("Error in thread while handling object", e);
+                failure++;
             }
         }
     }

@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -102,7 +103,7 @@ public class JobsDAO {
         return findJob(JobDTO.State.PENDING);
     }
 
-    public JobsIterator findJobsPending(int batchSizeLimit) {
+    public Iterator<JobDTO> findJobsPending(int batchSizeLimit) {
         return findJobs(JobDTO.State.PENDING, batchSizeLimit);
     }
 
@@ -127,7 +128,7 @@ public class JobsDAO {
         }
     }
 
-    public JobsIterator findJobs(JobDTO.State state, int batchSizeLimit) {
+    public Iterator<JobDTO> findJobs(JobDTO.State state, int batchSizeLimit) {
         try {
             PreparedStatement ps = buildPreparedStatement(GET_JOBS_WITH_STATE);
             ps.setString(1, state.getDatabaseStateName());

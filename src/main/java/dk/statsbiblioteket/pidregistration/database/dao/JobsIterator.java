@@ -6,11 +6,13 @@ import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-public class JobsIterator implements Iterator {
+public class JobsIterator implements Iterator<JobDTO> {
 
     private ResultSet jobs;
     private JobsDAO jobsDAO;
+    private JobDTO element;
 
     public JobsIterator(ResultSet jobs, JobsDAO jobsDAO) {
         this.jobs = jobs;
@@ -19,23 +21,28 @@ public class JobsIterator implements Iterator {
 
     @Override
     public boolean hasNext() {
-        try {
-            return jobs.isLast() || jobs.isAfterLast();
-        } catch (SQLException e) {
-            throw new DatabaseException(e.getNextException());
+        if (element == null){
+            try {
+                if (jobs.next()) {
+                    element = jobsDAO.resultSetToJobDTO(jobs);
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (SQLException e) {
+                throw new DatabaseException(e);
+            }
+        } else {
+            return true;
         }
     }
 
     @Override
     public JobDTO next() {
-        JobDTO result = null;
-        try {
-            if(jobs.next()){
-                result = jobsDAO.resultSetToJobDTO(jobs);
-            }
-        } catch (SQLException e) {
-            throw new DatabaseException(e.getNextException());
+        if (hasNext()){
+            return element;
+        } else {
+            throw new NoSuchElementException();
         }
-        return result;
     }
 }

@@ -1,6 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
+import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
 import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
@@ -52,7 +53,7 @@ public class PidRegistrationPerformanceTest {
             returns(fetchIds("reklamefilm.txt"), new ArrayList<String>());
         }};
 
-        new DatabaseSchema(CONFIG).removeIfExists();
+        new DatabaseSchema(new ConnectionFactory(CONFIG)).removeIfExists();
 
         pidRegistrations = new PIDRegistrations(CONFIG, domsClient, handleRegistry, domsObjectIdQueryer, new DOMSUpdater(domsClient));
 
