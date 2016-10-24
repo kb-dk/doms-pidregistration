@@ -26,7 +26,7 @@ public class JobDTO {
 
     private int id;
     private String uuid;
-    private Collection collection;
+    private String collectionId;
     private State state;
     private Date created;
     private Date lastStateChange;
@@ -34,9 +34,9 @@ public class JobDTO {
     public JobDTO() {
     }
 
-    public JobDTO(String uuid, Collection collection, State state) {
+    public JobDTO(String uuid, String collectionId, State state) {
         this.uuid = uuid;
-        this.collection = collection;
+        this.collectionId = collectionId;
         this.state = state;
         this.created = new Date();
         this.created = new Date();
@@ -59,12 +59,12 @@ public class JobDTO {
         this.uuid = uuid;
     }
 
-    public Collection getCollection() {
-        return collection;
+    public String getCollectionId() {
+        return collectionId;
     }
 
-    public void setCollection(Collection collection) {
-        this.collection = collection;
+    public void setCollectionId(String collectionId) {
+        this.collectionId = collectionId;
     }
 
     public State getState() {

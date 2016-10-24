@@ -219,6 +219,21 @@ public class PIDRegistrationsUnitTest {
     private Iterator<JobDTO> createJobsIterator(List<String> ids, Collection collection) {
         int numberOfJobs = ids.size();
 
+//        Iterator<String> idsIterator = ids.iterator();
+//
+//        return new Iterator<JobDTO>() {
+//            @Override
+//            public boolean hasNext() {
+//                return idsIterator.hasNext();
+//            }
+//
+//            @Override
+//            public JobDTO next() {
+//                String next = idsIterator.next();
+//                return new JobDTO(next, collection, null);
+//            }
+//        };
+
         return new Iterator<JobDTO>() {
             int index = 0;
 
@@ -231,7 +246,7 @@ public class PIDRegistrationsUnitTest {
             public JobDTO next() {
                 JobDTO job = null;
                 if(hasNext()){
-                    job = new JobDTO(ids.get(index), collection, null);
+                    job = new JobDTO(ids.get(index), collection.getId(), null);
                     index++;
                 }
                 return job;

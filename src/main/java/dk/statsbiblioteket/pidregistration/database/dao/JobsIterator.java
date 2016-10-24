@@ -11,12 +11,10 @@ import java.util.NoSuchElementException;
 public class JobsIterator implements Iterator<JobDTO> {
 
     private ResultSet jobs;
-    private JobsDAO jobsDAO;
     private JobDTO element;
 
-    public JobsIterator(ResultSet jobs, JobsDAO jobsDAO) {
+    public JobsIterator(ResultSet jobs) {
         this.jobs = jobs;
-        this.jobsDAO = jobsDAO;
     }
 
     @Override
@@ -24,9 +22,10 @@ public class JobsIterator implements Iterator<JobDTO> {
         if (element == null){
             try {
                 if (jobs.next()) {
-                    element = jobsDAO.resultSetToJobDTO(jobs);
+                    element = JobsDAO.resultSetToJobDTO(jobs);
                     return true;
                 } else {
+                    jobs.close();
                     return false;
                 }
             } catch (SQLException e) {

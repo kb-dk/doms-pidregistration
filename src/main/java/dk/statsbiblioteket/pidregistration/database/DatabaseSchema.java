@@ -32,12 +32,10 @@ public class DatabaseSchema {
     }
 
     private boolean exists() {
-        try {
-            Connection connection = connectionFactory.createConnection();
+        try (Connection connection = connectionFactory.createConnection()) {
             DatabaseMetaData metadata = connection.getMetaData();
             ResultSet resultSet = metadata.getTables("public", null, null, new String[]{"TABLE"});
             boolean exists = resultSet.next();
-            connection.close();
             return exists;
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -45,22 +43,20 @@ public class DatabaseSchema {
     }
 
     private void executeScript(String filename) {
-        try {
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(DatabaseSchema.class.getResourceAsStream("/" + filename), "UTF-8")
-            );
+        try (
+                Connection connection = connectionFactory.createConnection();
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(DatabaseSchema.class.getResourceAsStream("/" + filename), "UTF-8"))
+        ) {
             String str;
             String script = "";
 
             while ((str = in.readLine()) != null) {
                 script += str + "\n";
             }
-            in.close();
-            Connection connection = connectionFactory.createConnection();
 
             Statement statement = connection.createStatement();
             statement.executeUpdate(script);
-            connection.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (SQLException e) {

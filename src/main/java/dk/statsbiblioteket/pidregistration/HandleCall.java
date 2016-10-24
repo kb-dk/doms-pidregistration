@@ -30,12 +30,20 @@ public class HandleCall implements Callable<Boolean> {
         this.domsUpdater = domsUpdater;
     }
 
+    /**
+     * Attaches PID handle to metadata.
+     * Updates metadata at DOMS.
+     * Registers PID handle in handle registry.
+     *
+     * @return  true    If handle is updated successfully.
+     *          false   If handle already exists at DOMS and in handle registry.
+     */
     public Boolean call() {
         log.info("Handling object ID '{}'", jobDto.getUuid());
         PIDHandle pidHandle = new PIDHandle(configuration.getHandlePrefix(), jobDto.getUuid());
         boolean domsChanged = updateDoms(pidHandle);
         String url = String.format(
-                "%s/%s/%s", configuration.getPidPrefix(), jobDto.getCollection().getId(), pidHandle.getId());
+                "%s/%s/%s", configuration.getPidPrefix(), jobDto.getCollectionId(), pidHandle.getId());
         boolean handleRegistryChanged = handleRegistry.registerPid(
                 pidHandle,
                 url

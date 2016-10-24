@@ -50,7 +50,7 @@ public class JobsDAO {
 
             for (JobDTO jobDto : jobDtos) {
                 ps.setString(1, jobDto.getUuid());
-                ps.setString(2, jobDto.getCollection().getId());
+                ps.setString(2, jobDto.getCollectionId());
                 ps.setString(3, jobDto.getState().getDatabaseStateName());
                 ps.setTimestamp(4, new Timestamp(jobDto.getCreated().getTime()));
                 ps.setTimestamp(5, new Timestamp(jobDto.getLastStateChange().getTime()));
@@ -73,7 +73,7 @@ public class JobsDAO {
 
             for (JobDTO jobDto : jobDtos) {
                 ps.setString(1, jobDto.getUuid());
-                ps.setString(2, jobDto.getCollection().getId());
+                ps.setString(2, jobDto.getCollectionId());
                 ps.setString(3, jobDto.getState().getDatabaseStateName());
                 ps.setTimestamp(4, new Timestamp(jobDto.getCreated().getTime()));
                 ps.setTimestamp(5, new Timestamp(jobDto.getLastStateChange().getTime()));
@@ -134,17 +134,17 @@ public class JobsDAO {
             ps.setString(1, state.getDatabaseStateName());
             ps.setInt(2, batchSizeLimit);
             ResultSet resultSet = ps.executeQuery();
-            return new JobsIterator(resultSet, this);
+            return new JobsIterator(resultSet);
 
         } catch (SQLException e) {
             throw new DatabaseException(e.getNextException());
         }
     }
 
-    public JobDTO resultSetToJobDTO(ResultSet resultSet) throws SQLException {
+    public static JobDTO resultSetToJobDTO(ResultSet resultSet) throws SQLException {
         JobDTO result = new JobDTO();
         result.setId(resultSet.getInt("id"));
-        result.setCollection(findCollectionWithId(resultSet.getString("collection")));
+        result.setCollectionId(resultSet.getString("collection"));
         result.setUuid(resultSet.getString("uuid"));
         result.setState(findStateWithID(resultSet.getString("state")));
         result.setCreated(new Date(resultSet.getTimestamp("created").getTime()));
@@ -167,16 +167,7 @@ public class JobsDAO {
         }
     }
 
-    private Collection findCollectionWithId(String id) {
-        for (Collection collection : configuration.getDomsCollections()) {
-            if (collection.getId().equals(id)) {
-                return collection;
-            }
-        }
-        return null;
-    }
-
-    private JobDTO.State findStateWithID(String id) {
+    private static JobDTO.State findStateWithID(String id) {
         for (JobDTO.State state : JobDTO.State.values()) {
             if (state.getDatabaseStateName().equals(id)) {
                 return state;

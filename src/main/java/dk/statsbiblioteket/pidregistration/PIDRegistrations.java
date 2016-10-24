@@ -265,7 +265,7 @@ public class PIDRegistrations {
             if (jobsDao.findJobWithUUID(objectId) != null) {
                 log.debug("Job with UUID " + objectId + " already exists in job list. Ignoring");
             } else {
-                result.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
+                result.add(new JobDTO(objectId, collection.getId(), JobDTO.State.PENDING));
             }
         }
 

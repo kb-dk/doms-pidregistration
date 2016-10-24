@@ -105,7 +105,7 @@ public class DatabasePerformanceTest {
             if (jobsDao.findJobWithUUID(objectId) != null) {
                 log.debug("Job with UUID " + objectId + " already exists in job list. Ignoring");
             } else {
-                jobDtos.add(new JobDTO(objectId, collection, JobDTO.State.PENDING));
+                jobDtos.add(new JobDTO(objectId, collection.getId(), JobDTO.State.PENDING));
                 count++;
             }
         }
