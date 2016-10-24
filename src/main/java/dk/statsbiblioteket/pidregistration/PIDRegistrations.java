@@ -48,7 +48,6 @@ public class PIDRegistrations {
 
     private int failure = 0;
     private int success = 0;
-    private int handlesSkipped = 0;
 
     private Integer numberOfObjectsToTest;
 
@@ -184,8 +183,7 @@ public class PIDRegistrations {
                 handleObjects(jobsDao);
             }
 
-            String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
-            log.info(message);
+            log.info("Done adding handles. #success: {} #failure: {}", success, failure);
 
         } catch (SQLException e) {
             log.error("Error when trying to close connection to database", e);
@@ -292,7 +290,7 @@ public class PIDRegistrations {
         int numberOfThreads = configuration.getNumberOfThreads();
         ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
 
-        List<Future<JobDTO>> results;
+        List<Pair<JobDTO, Future<Boolean>>> results;
 
         do {
             Iterator<JobDTO> pendingJobs = jobsDao.findJobsPending(JOBS_QUEUE_LIMIT);
@@ -302,9 +300,9 @@ public class PIDRegistrations {
             while (pendingJobs.hasNext()) {
                 JobDTO jobDto = pendingJobs.next();
                 HandleCall handleCall = new HandleCall(
-                        jobDto, handleRegistry, jobsDao, configuration, domsMetadataQueryer, domsUpdater);
-                Future<JobDTO> result = executor.submit(handleCall);
-                results.add(result);
+                        jobDto, handleRegistry, configuration, domsMetadataQueryer, domsUpdater);
+                Future<Boolean> result = executor.submit(handleCall);
+                results.add(new Pair<>(jobDto, result));
             }
 
             countHandleSuccess(results, jobsDao);
@@ -319,24 +317,40 @@ public class PIDRegistrations {
         }
     }
 
-    private void countHandleSuccess(List<Future<JobDTO>> results, JobsDAO jobsDAO) {
-        for (Future<JobDTO> result : results) {
+    private void countHandleSuccess(List<Pair<JobDTO, Future<Boolean>>> results, JobsDAO jobsDAO) {
+        for (Pair<JobDTO, Future<Boolean>> result : results) {
+            JobDTO jobDto = result.getFirst();
             try {
-                JobDTO jobDto = result.get();
-                jobsDAO.update(jobDto);
-
-                if(jobDto.getState().equals(JobDTO.State.DONE)){
+                if(result.getSecond().get()){
                     success++;
                 }
-                else {
-                    failure++;
-                }
+
+                jobDto.setState(JobDTO.State.DONE);
 
             } catch (Exception e) {
-                // TODO: Throw exception?
-                log.error("Error in thread while handling object", e);
+                log.error("Error handling object ID '{}'", jobDto.getUuid(), e);
                 failure++;
+                jobDto.setState(JobDTO.State.ERROR);
             }
+            jobsDAO.update(jobDto);
+        }
+    }
+
+    private class Pair<T, S> {
+        private T first;
+        private S second;
+
+        private Pair(T first, S second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        public T getFirst() {
+            return first;
+        }
+
+        public S getSecond() {
+            return second;
         }
     }
 }

@@ -1,7 +1,6 @@
 package dk.statsbiblioteket.pidregistration;
 
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
-import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
@@ -13,44 +12,35 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Callable;
 
 
-public class HandleCall implements Callable<JobDTO> {
+public class HandleCall implements Callable<Boolean> {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final JobDTO jobDto;
     private final GlobalHandleRegistry handleRegistry;
-    private final JobsDAO jobsDAO;
     private final PropertyBasedRegistrarConfiguration configuration;
     private final DOMSMetadataQueryer domsMetadataQueryer;
     private final DOMSUpdater domsUpdater;
 
-    public HandleCall(JobDTO jobDto, GlobalHandleRegistry handleRegistry, JobsDAO jobsDAO,
+    public HandleCall(JobDTO jobDto, GlobalHandleRegistry handleRegistry,
                       PropertyBasedRegistrarConfiguration configuration, DOMSMetadataQueryer domsMetadataQueryer,
                       DOMSUpdater domsUpdater) {
         this.jobDto = jobDto;
         this.handleRegistry = handleRegistry;
-        this.jobsDAO = jobsDAO;
         this.configuration = configuration;
         this.domsMetadataQueryer = domsMetadataQueryer;
         this.domsUpdater = domsUpdater;
     }
 
-    public JobDTO call() {
-        try {
-            log.info("Handling object ID '{}'", jobDto.getUuid());
-            PIDHandle pidHandle = new PIDHandle(configuration.getHandlePrefix(), jobDto.getUuid());
-            updateDoms(pidHandle);
-            String url = String.format(
-                    "%s/%s/%s", configuration.getPidPrefix(), jobDto.getCollection().getId(), pidHandle.getId());
-            handleRegistry.registerPid(
-                    pidHandle,
-                    url
-            );
-            jobDto.setState(JobDTO.State.DONE);
-
-        } catch (Exception e) {
-            jobDto.setState(JobDTO.State.ERROR);
-            log.error("Error handling object ID '{}'", jobDto.getUuid(), e);
-        }
-        return jobDto;
+    public Boolean call() {
+        log.info("Handling object ID '{}'", jobDto.getUuid());
+        PIDHandle pidHandle = new PIDHandle(configuration.getHandlePrefix(), jobDto.getUuid());
+        boolean domsChanged = updateDoms(pidHandle);
+        String url = String.format(
+                "%s/%s/%s", configuration.getPidPrefix(), jobDto.getCollection().getId(), pidHandle.getId());
+        boolean handleRegistryChanged = handleRegistry.registerPid(
+                pidHandle,
+                url
+        );
+        return domsChanged || handleRegistryChanged;
     }
 
     private boolean updateDoms(PIDHandle pidHandle) {

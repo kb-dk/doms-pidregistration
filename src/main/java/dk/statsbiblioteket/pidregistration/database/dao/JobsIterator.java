@@ -40,7 +40,9 @@ public class JobsIterator implements Iterator<JobDTO> {
     @Override
     public JobDTO next() {
         if (hasNext()){
-            return element;
+            JobDTO result = element;
+            element = null;
+            return result;
         } else {
             throw new NoSuchElementException();
         }

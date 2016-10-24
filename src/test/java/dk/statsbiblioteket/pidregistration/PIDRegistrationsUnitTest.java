@@ -13,6 +13,7 @@ import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.InvalidResour
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.MethodFailedException;
 import net.handle.hdllib.HandleException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -245,5 +246,63 @@ public class PIDRegistrationsUnitTest {
                     thenReturn(MetadataGenerator.createDatastream(id, "some/path",
                             withHandle ? Optional.of("hdl:" + HANDLE_PREFIX + "/" + id) : Optional.empty()));
         }
+    }
+
+
+
+    @Ignore
+    @Test
+    public void test_doRegistrations_PerformanceWith4Threads() throws MethodFailedException,
+            InvalidResourceException, InvalidCredentialsException {
+
+        test_doRegistrations_PerformanceWithXThreads(4);
+    }
+
+    @Ignore
+    @Test
+    public void test_doRegistrations_PerformanceWith1Thread() throws MethodFailedException,
+            InvalidResourceException, InvalidCredentialsException {
+
+        test_doRegistrations_PerformanceWithXThreads(1);
+    }
+
+    private void test_doRegistrations_PerformanceWithXThreads(int numberOfThreads) throws MethodFailedException,
+            InvalidResourceException, InvalidCredentialsException {
+
+        List<String> idsUnderTest = new ArrayList<>();
+        for (int i = 0; i < 35; i++) {
+            idsUnderTest.add("uuid:id-" + i);
+        }
+
+        Collection collection = new Collection(ID, DOMS_COLLECTION);
+
+        when(domsObjectIDQueryer.findNextIn(collection, new Date(0)))
+                .thenReturn(new DOMSObjectIDQueryResult(idsUnderTest.subList(0, 10), new Date(0)),
+                        new DOMSObjectIDQueryResult(idsUnderTest.subList(10, 20), new Date(0)),
+                        new DOMSObjectIDQueryResult(idsUnderTest.subList(20, 30), new Date(0)),
+                        new DOMSObjectIDQueryResult(idsUnderTest.subList(30, 35), new Date(0)));
+
+        createAndUseMetadata(idsUnderTest, false);
+
+        doAnswer(invocationOnMock -> {
+            Thread.sleep(100);
+            return null;}
+        ).when(domsUpdater).update(anyString(), any());
+
+        doAnswer(invocationOnMock -> {
+            Thread.sleep(100);
+            return null;}
+        ).when(handleRegistry).registerPid(any(), anyString());
+
+        Iterator<JobDTO> jobs = createJobsIterator(idsUnderTest, collection);
+        when(jobsDAO.findJobsPending(anyInt())).thenReturn(jobs);
+
+        when(CONFIG_SPY.getNumberOfThreads()).thenReturn(numberOfThreads);
+
+
+        long startTime = System.currentTimeMillis();
+        PIDRegistrations.doRegistrations();
+        long endTime = System.currentTimeMillis();
+        System.out.println("Registration with " + numberOfThreads + " thread(s) took " + (endTime - startTime) + " ms.");
     }
 }
