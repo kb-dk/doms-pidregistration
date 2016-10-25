@@ -81,7 +81,8 @@ public class PIDRegistrationsUnitTest {
         when(domsObjectIDQueryer.findNextIn(collection, new Date(0)))
                 .thenReturn(new DOMSObjectIDQueryResult(idsUnderTest, new Date(0)));
 
-        createAndUseMetadata(idsUnderTest, false);
+        boolean withHandle = false;
+        createAndUseMetadata(idsUnderTest, withHandle);
 
         Iterator<JobDTO> jobs = createJobsIterator(idsUnderTest, collection);
         when(jobsDAO.findJobsPending(anyInt())).thenReturn(jobs);
@@ -111,7 +112,8 @@ public class PIDRegistrationsUnitTest {
         when(domsObjectIDQueryer.findNextIn(collection, new Date(0)))
                 .thenReturn(new DOMSObjectIDQueryResult(idsUnderTest, new Date(0)));
 
-        createAndUseMetadata(idsUnderTest, true);
+        boolean withHandle = true;
+        createAndUseMetadata(idsUnderTest, withHandle);
 
         Iterator<JobDTO> jobs = createJobsIterator(idsUnderTest, collection);
         when(jobsDAO.findJobsPending(anyInt())).thenReturn(jobs);
@@ -143,7 +145,8 @@ public class PIDRegistrationsUnitTest {
         when(domsObjectIDQueryer.findNextIn(collection, new Date(0)))
                 .thenReturn(new DOMSObjectIDQueryResult(idsUnderTest, new Date(0)));
 
-        createAndUseMetadata(idsUnderTest, false);
+        boolean withHandle = false;
+        createAndUseMetadata(idsUnderTest, withHandle);
 
         Iterator<JobDTO> jobs = createJobsIterator(idsUnderTest, collection);
         when(jobsDAO.findJobsPending(anyInt())).thenReturn(jobs);
@@ -178,7 +181,8 @@ public class PIDRegistrationsUnitTest {
                 .thenReturn(new DOMSObjectIDQueryResult(idsUnderTest.subList(0, MAX_DOMS_RESULT_SIZE), new Date(0)),
                         new DOMSObjectIDQueryResult(idsUnderTest.subList(MAX_DOMS_RESULT_SIZE, 15), new Date(0)));
 
-        createAndUseMetadata(idsUnderTest, false);
+        boolean withHandle = false;
+        createAndUseMetadata(idsUnderTest, withHandle);
 
         Iterator<JobDTO> jobs = createJobsIterator(idsUnderTest, collection);
         when(jobsDAO.findJobsPending(anyInt())).thenReturn(jobs);
@@ -217,41 +221,7 @@ public class PIDRegistrationsUnitTest {
     }
 
     private Iterator<JobDTO> createJobsIterator(List<String> ids, Collection collection) {
-        int numberOfJobs = ids.size();
-
-//        Iterator<String> idsIterator = ids.iterator();
-//
-//        return new Iterator<JobDTO>() {
-//            @Override
-//            public boolean hasNext() {
-//                return idsIterator.hasNext();
-//            }
-//
-//            @Override
-//            public JobDTO next() {
-//                String next = idsIterator.next();
-//                return new JobDTO(next, collection, null);
-//            }
-//        };
-
-        return new Iterator<JobDTO>() {
-            int index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return index < numberOfJobs;
-            }
-
-            @Override
-            public JobDTO next() {
-                JobDTO job = null;
-                if(hasNext()){
-                    job = new JobDTO(ids.get(index), collection.getId(), null);
-                    index++;
-                }
-                return job;
-            }
-        };
+        return ids.stream().map(id -> new JobDTO(id, collection.getId(), null)).iterator();
     }
 
     private void createAndUseMetadata(List<String> ids, boolean withHandle) throws MethodFailedException,
@@ -297,7 +267,8 @@ public class PIDRegistrationsUnitTest {
                         new DOMSObjectIDQueryResult(idsUnderTest.subList(20, 30), new Date(0)),
                         new DOMSObjectIDQueryResult(idsUnderTest.subList(30, 35), new Date(0)));
 
-        createAndUseMetadata(idsUnderTest, false);
+        boolean withHandle = false;
+        createAndUseMetadata(idsUnderTest, withHandle);
 
         doAnswer(invocationOnMock -> {
             Thread.sleep(100);

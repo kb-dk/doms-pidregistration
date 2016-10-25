@@ -27,7 +27,8 @@ public class DOMSObjectIDQueryer {
             List<String> result = new ArrayList<String>();
             log.debug("Querying DOMS for objects in collection {} modified since {} ({})", new Object[] {
                       collection,
-                      sinceInclusive, sinceInclusive.getTime()});
+                      sinceInclusive,
+                      sinceInclusive.getTime()});
 
             Date latestReadSoFar = sinceInclusive;
             List<RecordDescription> recordDescriptions = domsClient.getIDsModified(sinceInclusive, collection);

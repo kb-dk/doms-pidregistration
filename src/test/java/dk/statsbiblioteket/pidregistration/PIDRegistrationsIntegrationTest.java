@@ -74,7 +74,7 @@ public class PIDRegistrationsIntegrationTest {
 
         PIDRegistrations PIDRegistrations =
                 new PIDRegistrations(CONFIG, domsClient, handleRegistry,
-                        domsObjectIDQueryer, new DOMSUpdater(domsClient));
+                        domsObjectIDQueryer, domsUpdater);
 
         HandleResolver handleResolver = new HandleResolver();
 

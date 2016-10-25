@@ -113,7 +113,6 @@ public class PIDRegistrations {
         DatabaseSchema databaseSchema = new DatabaseSchema(connectionFactory);
         databaseSchema.createIfNotExist();
 
-        // Setup connection
         try (Connection connection = connectionFactory.createConnection()) {
             JobsDAO jobsDao = connectionFactory.createJobsDAO(connection);
             CollectionTimestampsDAO collectionTimestampsDao = connectionFactory.createCollectionTimestampsDAO(connection);
@@ -122,7 +121,8 @@ public class PIDRegistrations {
             Set<Collection> collections = configuration.getDomsCollections();
 
             int jobCount = 0;
-            log.info("Adding jobs to database");
+            Object[] collectionIds = collections.stream().map(Collection::getId).toArray();
+            log.info("Adding jobs to database from collections: {}", collectionIds);
             for (Collection collection : collections) {
                 int jobCountPerCollection = 0;
                 Date sinceInclusive = getOrCreateTimestampForCollection(collectionTimestampsDao, collection);
@@ -134,6 +134,10 @@ public class PIDRegistrations {
                     List<JobDTO> jobsToBeAdded = buildNewJobs(jobsDao, collection, distinctObjectIds);
 
                     if (isTestMode() && jobsToBeAdded.size() > numberOfObjectsToTest) {
+                        log.debug("Test requires only {} objects to be tested " +
+                                "and collection '{}' gives {} jobs. Skipping the remaining jobs.",
+                                numberOfObjectsToTest, collection.getId(), jobsToBeAdded.size());
+
                         jobsToBeAdded = jobsToBeAdded.subList(0, numberOfObjectsToTest);
                     }
 
@@ -150,7 +154,8 @@ public class PIDRegistrations {
 
                     jobCountPerCollection += jobsAdded;
                     jobCount += jobsAdded;
-                    log.info("Jobs added so far: {}", jobCount);
+                    log.info("Jobs added so far: {}. Jobs added for collection '{}': {}",
+                            jobCount, collection.getId(), jobCountPerCollection);
 
                     if (queryResult.getObjectIds().size() < domsClient.getMaxDomsResultSize()) {
                         log.debug("DOMS client returned {} objects which is less than the max result size of {}. " +
@@ -170,11 +175,14 @@ public class PIDRegistrations {
             }
             log.info("Added {} jobs", jobCount);
 
+            // Add jobs that have previously failed.
+            beginTransaction(connection);
             JobDTO jobDto;
             while ((jobDto = jobsDao.findJobError()) != null) {
                 jobDto.setState(JobDTO.State.PENDING);
                 jobsDao.update(jobDto);
             }
+            commitTransaction(connection);
 
             log.info("Adding handles");
             if (isTestMode()) {
@@ -194,6 +202,13 @@ public class PIDRegistrations {
         return numberOfObjectsToTest != null;
     }
 
+    /**
+     * For each job that has completed:
+     *  Unattach handle from object at DOMS.
+     *  Unregister handle in handle registry.
+     *
+     * Only used for testing purposes,
+     */
     public void doUnregistrations() {
         try (Connection connection = connectionFactory.createConnection()){
             JobsDAO jobsDao = connectionFactory.createJobsDAO(connection);
