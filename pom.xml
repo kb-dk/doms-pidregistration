@@ -172,6 +172,9 @@
               <goal>wsimport</goal>
             </goals>
             <configuration>
+              <vmArgs>
+                <vmArg>-Djavax.xml.accessExternalSchema=all</vmArg>
+              </vmArgs>
               <wsdlDirectory>src/main/schemas</wsdlDirectory>
               <wsdlFiles>
                 <wsdlFile>centralwebservice.wsdl</wsdlFile>
