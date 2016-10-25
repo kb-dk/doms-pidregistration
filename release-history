@@ -2,6 +2,9 @@ Release history for the doms-pidregistration project.
 
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
+1.1 released 2016-10-25
+ * Add support for multithreaded pid registration
+
 1.0.12 released 2016-07-04
  * Update postgres JDBC driver to newest version (9.4.1208)
 
