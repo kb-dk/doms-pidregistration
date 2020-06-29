@@ -17,12 +17,14 @@ import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -147,9 +149,8 @@ public class PIDRegistrations {
                 handleObject(jobDto);
             }
         }
-
-        String message = String.format("Done adding handles. #success: %s #failure: %s", success, failure);
-        log.info(message);
+        
+        log.info("Done adding handles. #success: {} #failure: {}", success, failure);
 
         teardownConnection();
     }
@@ -263,7 +264,7 @@ public class PIDRegistrations {
 
     private void handleObject(JobDTO jobDto) {
         try {
-            log.info(String.format("Handling object ID '%s'", jobDto.getUuid()));
+            log.info("Handling object ID '{}'", jobDto.getUuid());
             PIDHandle pidHandle = buildHandle(jobDto.getUuid());
             boolean domsChanged = updateDoms(pidHandle);
             boolean handleRegistryChanged = handleRegistry.registerPid(
@@ -282,7 +283,7 @@ public class PIDRegistrations {
 
             jobDto.setState(JobDTO.State.ERROR);
             jobsDao.update(jobDto);
-            log.error(String.format("Error handling object ID '%s'", jobDto.getUuid()), e);
+            log.error("Error handling object ID '{}'", jobDto.getUuid(), e);
         }
     }
 
@@ -295,19 +296,17 @@ public class PIDRegistrations {
         DOMSMetadata metadata = domsMetadataQueryer.getMetadataForObject(objectId);
         boolean domsChanged = false;
         if (!metadata.handleExists(pidHandle)) {
-            log.debug(String.format("Attaching PID handle '%s' to object ID '%s' in DOMS", pidHandle, objectId));
+            log.debug("Attaching PID handle '{}' to object ID '{}' in DOMS", pidHandle, objectId);
             metadata.attachHandle(pidHandle);
             domsUpdater.update(objectId, metadata);
             domsChanged = true;
         } else {
-            log.info(String.format(
-                    "PID handle '%s' already attached to object ID '%s'. Not added to DOMS", pidHandle, objectId
-            ));
+            log.info("PID handle '{}' already attached to object ID '{}'. Not added to DOMS", pidHandle, objectId);
         }
         return domsChanged;
     }
 
     private String buildUrl(Collection collection, PIDHandle handle) {
-        return String.format("%s/%s/%s", configuration.getPidPrefix(), collection.getId(), handle.getId());
+        return String.format(Locale.ROOT, "%s/%s/%s", configuration.getPidPrefix(), collection.getId(), handle.getId());
     }
 }

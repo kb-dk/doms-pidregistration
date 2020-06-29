@@ -9,7 +9,7 @@
   <parent>
     <groupId>org.sbforge</groupId>
     <artifactId>sbforge-parent</artifactId>
-    <version>18</version>
+    <version>22</version>
   </parent>
 
   <scm>
@@ -147,14 +147,6 @@
         </executions>
       </plugin>
 
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.4.1</version>
-        <configuration>
-          <goals>deploy</goals>
-        </configuration>
-      </plugin>
-
       <plugin> <!-- Compile WSDL into Java classes -->
         <groupId>org.jvnet.jax-ws-commons</groupId>
         <artifactId>jaxws-maven-plugin</artifactId>
@@ -183,26 +175,17 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <phase>none</phase><!--Disable the release-profile broken source plugin. See http://blog.peterlynch.ca/2010/05/maven-how-to-prevent-generate-sources.html-->
-          </execution>
-          <execution>
-            <id>attach-sources-no-fork</id>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 
   <properties>
+    <!-- Specify java version here, to support forbiddenapis plugin -->
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <!-- Replace the line below with
+         <api.check.phase>none</api.check.phase>
+         to disable forbidden APIs check -->
+    <api.check.phase>process-test-classes</api.check.phase>
     <additionalparam>-Xdoclint:none</additionalparam>
   </properties>
 

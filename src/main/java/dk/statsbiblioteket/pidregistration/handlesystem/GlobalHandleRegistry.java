@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.security.PrivateKey;
+import java.util.Locale;
 
 /**
  * Responsible for communications with the global handle registry
@@ -122,7 +123,7 @@ public class GlobalHandleRegistry {
 
     private String findFirstWithTypeUrl(HandleValue[] handleValues) {
         for (HandleValue value : handleValues) {
-            String type = value.getTypeAsString().toUpperCase();
+            String type = value.getTypeAsString().toUpperCase(Locale.ROOT);
             int index = value.getIndex();
             if (index == URL_RECORD_INDEX && type.equals("URL")) {
                 return value.getDataAsString();

@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import javax.xml.transform.TransformerException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,7 +130,8 @@ public class PIDRegistrationsIntegrationTest {
             metadata = domsMetadataQueryer.getMetadataForObject(objectId);
             PIDHandle handle = new PIDHandle(CONFIG.getHandlePrefix(), objectId);
             assertTrue(metadata.handleExists(handle));
-            String url = new String((handleResolver.resolveHandle(handle.asString()))[1].getData());
+            String url = new String((handleResolver.resolveHandle(handle.asString()))[1].getData(), 
+                    StandardCharsets.UTF_8);
             assertNotNull(url);
             assertTrue(url.startsWith("http://"));
         }

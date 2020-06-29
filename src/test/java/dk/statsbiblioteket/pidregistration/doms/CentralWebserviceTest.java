@@ -15,6 +15,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Ignore
@@ -36,11 +37,11 @@ public class CentralWebserviceTest {
         domsAPILogin.put(BindingProvider.USERNAME_PROPERTY, "fedoraAdmin");
         domsAPILogin.put(BindingProvider.PASSWORD_PROPERTY, "fedoraAdminPass");
 
-        long time = new SimpleDateFormat("yyyy-MM-dd").parse("2013-08-27").getTime();
+        long time = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).parse("2013-08-27").getTime();
         List<RecordDescription> recordDescriptions =
                 centralWebservice.getIDsModified(time, "doms:Collection_Reklamefilm", "SummaVisible", "Published", 0, 10000);
         for (RecordDescription recordDescription : recordDescriptions) {
-            System.out.println(String.format("PID: %s, Date: %s", recordDescription.getPid(), recordDescription.getDate()));
+            System.out.println(String.format(Locale.ROOT, "PID: %s, Date: %s", recordDescription.getPid(), recordDescription.getDate()));
         }
     }
 }
