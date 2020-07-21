@@ -30,7 +30,7 @@ public class PIDRegistrationsCommandLineInterface {
             }
 
             PropertyBasedRegistrarConfiguration config = new PropertyBasedRegistrarConfiguration(
-                    new File(System.getProperty("user.home"), "doms-pidregistration.properties"));
+                    new File(System.getProperty("dk.kb.applicationConfig")));
 
             Integer numberOfObjectsToTest = line.hasOption("t") ? Integer.parseInt(line.getOptionValue("t")) : null;
             boolean isInTestmode = line.hasOption("t");
