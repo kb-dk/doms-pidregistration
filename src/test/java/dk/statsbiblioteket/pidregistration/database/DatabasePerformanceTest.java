@@ -5,8 +5,8 @@ import dk.statsbiblioteket.pidregistration.PIDRegistrationsIntegrationTest;
 import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
 import dk.statsbiblioteket.pidregistration.database.dao.JobsDAO;
 import dk.statsbiblioteket.pidregistration.database.dto.JobDTO;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-@Ignore
+@Disabled
 public class DatabasePerformanceTest {
 
     private static final Logger log = LoggerFactory.getLogger(DatabasePerformanceTest.class);

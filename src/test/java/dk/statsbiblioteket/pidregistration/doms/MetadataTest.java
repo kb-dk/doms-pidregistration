@@ -2,12 +2,13 @@ package dk.statsbiblioteket.pidregistration.doms;
 
 import dk.statsbiblioteket.pidregistration.PIDHandle;
 import dk.statsbiblioteket.util.xml.DOM;
-import org.junit.Test;
 
 import javax.xml.transform.TransformerException;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class MetadataTest {
 

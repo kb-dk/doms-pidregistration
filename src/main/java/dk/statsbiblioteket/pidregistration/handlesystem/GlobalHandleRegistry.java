@@ -107,7 +107,7 @@ public class GlobalHandleRegistry {
         processRequest(request);
     }
 
-    private HandleValue[] lookupHandle(PIDHandle handle) {
+    HandleValue[] lookupHandle(PIDHandle handle) {
         try {
             return handleResolver.resolveHandle(handle.asString());
         } catch (HandleException e) {
@@ -121,7 +121,7 @@ public class GlobalHandleRegistry {
         }
     }
 
-    private String findFirstWithTypeUrl(HandleValue[] handleValues) {
+    String findFirstWithTypeUrl(HandleValue[] handleValues) {
         for (HandleValue value : handleValues) {
             String type = value.getTypeAsString().toUpperCase(Locale.ROOT);
             int index = value.getIndex();
@@ -132,19 +132,19 @@ public class GlobalHandleRegistry {
         return null;
     }
 
-    private void createPidWithUrl(PIDHandle handle, String url)
+    void createPidWithUrl(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
         AbstractRequest request = handleRequestBuilder.buildCreateHandleRequest(handle, url);
         processRequest(request);
     }
 
-    private void addUrlToPid(PIDHandle handle, String url)
+    void addUrlToPid(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
         AbstractRequest request = handleRequestBuilder.buildAddUrlRequest(handle, url);
         processRequest(request);
     }
 
-    private void replaceUrlOfPid(PIDHandle handle, String url)
+    void replaceUrlOfPid(PIDHandle handle, String url)
             throws RegisteringPidFailedException {
         AbstractRequest request = handleRequestBuilder.buildModifyUrlRequest(handle, url);
         processRequest(request);

@@ -1,12 +1,16 @@
 package dk.statsbiblioteket.pidregistration;
 
-import junit.framework.TestCase;
+
 import org.apache.commons.cli.CommandLine;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test command line parsing.
  */
-public class PIDRegistrationsCommandLineInterfaceTest extends TestCase {
+public class PIDRegistrationsCommandLineInterfaceTest {
+    
+    @Test
     public void testParseOptions() throws Exception {
         CommandLine cl = PIDRegistrationsCommandLineInterface.parseOptions(new String[]{});
         assertNotNull(cl);

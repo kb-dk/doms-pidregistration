@@ -5,22 +5,22 @@ import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadata;
 import dk.statsbiblioteket.pidregistration.doms.DOMSMetadataQueryer;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryResult;
 import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
 import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyException;
 import dk.statsbiblioteket.pidregistration.handlesystem.PrivateKeyLoader;
 import dk.statsbiblioteket.util.xml.DOM;
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
 import net.handle.hdllib.DeleteHandleRequest;
 import net.handle.hdllib.HandleException;
 import net.handle.hdllib.HandleResolver;
 import net.handle.hdllib.PublicKeyAuthenticationInfo;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import javax.xml.transform.TransformerException;
 import java.nio.charset.Charset;
@@ -33,24 +33,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Test handle objects using online Fedora.
  * NOTE: This test will _only_ work if the fedora mentioned in the test
  * config is available and contains the expected data.
  */
-@Ignore
+@Disabled
 public class PIDRegistrationsIntegrationTest {
     private static final PropertyBasedRegistrarConfiguration CONFIG
             = new PropertyBasedRegistrarConfiguration(
             PIDRegistrationsIntegrationTest.class.getResourceAsStream("/doms-pidregistration.properties"));
 
-    @Mocked
     private DOMSObjectIDQueryer domsObjectIdQueryer = null;
 
     private DOMSClient domsClient = new DOMSClient(CONFIG);
@@ -71,7 +68,7 @@ public class PIDRegistrationsIntegrationTest {
     private static final List<String> TV_IDS_UNDER_TEST =
             Arrays.asList("uuid:001fdf2b-a05a-40de-a43b-787f1ba9041f",
                           "uuid:0019f31d-b6f7-4ef2-81f6-89b116c64272");
-    @Before
+    @BeforeEach
     public void setup() throws TransformerException {
         domsOriginals = new HashMap<String, DOMSMetadata>();
         List<String> storedContents = new ArrayList<String>(REKLAME_IDS_UNDER_TEST);
@@ -87,14 +84,12 @@ public class PIDRegistrationsIntegrationTest {
 
     @Test
     public void testRegistrations() throws TransformerException, HandleException {
-        new NonStrictExpectations() {{
+        domsObjectIdQueryer = mock(DOMSObjectIDQueryer.class);
+        when(domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION), new Date(0)))
+            .thenReturn(new DOMSObjectIDQueryResult(TV_IDS_UNDER_TEST, new Date(0)));
 
-            domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION), new Date(0));
-            returns(TV_IDS_UNDER_TEST, new ArrayList<String>());
-
-            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION), new Date(0));
-            returns(REKLAME_IDS_UNDER_TEST, new ArrayList<String>());
-        }};
+        when(domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION), new Date(0)))
+            .thenReturn(new DOMSObjectIDQueryResult(REKLAME_IDS_UNDER_TEST, new Date(0)));
 
         new DatabaseSchema(CONFIG).removeIfExists();
 
@@ -140,7 +135,7 @@ public class PIDRegistrationsIntegrationTest {
         assertTrue(metadata.handleExists(new PIDHandle(CONFIG.getHandlePrefix(), alreadyModified)));
     }
 
-    @After
+    @AfterEach
     public void teardown() throws HandleException, TransformerException {
         restoreDoms();
         restoreGlobalHandleRegistry();
