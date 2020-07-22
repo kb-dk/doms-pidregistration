@@ -37,8 +37,8 @@ public class GlobalHandleRegistryTest {
     public void testAddUrlToPid() {
         GlobalHandleRegistry globalHandleRegistry = mock(GlobalHandleRegistry.class);
         when(globalHandleRegistry.registerPid(eq(PID), eq(URL))).thenCallRealMethod();
-        HandleValue mockedHV = mock(HandleValue.class);
-        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{mockedHV});
+        HandleValue hv = new HandleValue();
+        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{hv});
 
         globalHandleRegistry.registerPid(PID, URL);
 
@@ -55,8 +55,8 @@ public class GlobalHandleRegistryTest {
         
         GlobalHandleRegistry globalHandleRegistry = mock(GlobalHandleRegistry.class);
         when(globalHandleRegistry.registerPid(eq(PID), eq(someOtherUrl))).thenCallRealMethod();
-        HandleValue mockedHV = mock(HandleValue.class);
-        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{mockedHV});
+        HandleValue hv = new HandleValue(); 
+        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{hv});
         when(globalHandleRegistry.findFirstWithTypeUrl(any(HandleValue[].class))).thenReturn(URL);
         
         globalHandleRegistry.registerPid(PID, someOtherUrl);
@@ -71,8 +71,8 @@ public class GlobalHandleRegistryTest {
     public void testThatReplacingUrlAtPidWithSameUrlDoesNothing() {
         GlobalHandleRegistry globalHandleRegistry = mock(GlobalHandleRegistry.class);
         when(globalHandleRegistry.registerPid(eq(PID), eq(URL))).thenCallRealMethod();
-        HandleValue mockedHV = mock(HandleValue.class);
-        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{mockedHV});
+        HandleValue hv = new HandleValue();
+        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{hv});
         when(globalHandleRegistry.findFirstWithTypeUrl(any(HandleValue[].class))).thenReturn(URL);
 
         globalHandleRegistry.registerPid(PID, URL);
