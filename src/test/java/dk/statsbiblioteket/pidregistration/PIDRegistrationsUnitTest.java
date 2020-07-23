@@ -12,9 +12,10 @@ import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.InvalidCreden
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.InvalidResourceException;
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.MethodFailedException;
 import net.handle.hdllib.HandleException;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import javax.xml.transform.TransformerException;
@@ -26,7 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -47,7 +48,7 @@ public class PIDRegistrationsUnitTest {
     private DOMSObjectIDQueryer domsObjectIDQueryer;
     private JobsDAO jobsDAO;
 
-    @Before
+    @BeforeEach
     public void setup() {
 
         domsClient = mock(DOMSClient.class);
@@ -208,7 +209,7 @@ public class PIDRegistrationsUnitTest {
             PIDHandle handle = new PIDHandle(HANDLE_PREFIX, id);
             ArgumentCaptor<DOMSMetadata> firstMetadataArg = ArgumentCaptor.forClass(DOMSMetadata.class);
             verify(domsUpdater).update(eq(id), firstMetadataArg.capture());
-            assertTrue("Metadata was not updated with correct handle", firstMetadataArg.getValue().handleExists(handle));
+            assertTrue(firstMetadataArg.getValue().handleExists(handle), "Metadata was not updated with correct handle");
         }
     }
 
@@ -235,7 +236,7 @@ public class PIDRegistrationsUnitTest {
 
 
 
-    @Ignore
+    @Disabled
     @Test
     public void test_doRegistrations_PerformanceWith4Threads() throws MethodFailedException,
             InvalidResourceException, InvalidCredentialsException {
@@ -243,7 +244,7 @@ public class PIDRegistrationsUnitTest {
         test_doRegistrations_PerformanceWithXThreads(4);
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void test_doRegistrations_PerformanceWith1Thread() throws MethodFailedException,
             InvalidResourceException, InvalidCredentialsException {

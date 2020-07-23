@@ -13,12 +13,13 @@ import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import dk.statsbiblioteket.pidregistration.utilities.MetadataGenerator;
 import net.handle.hdllib.HandleException;
 import net.handle.hdllib.HandleResolver;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
 
 import javax.xml.transform.TransformerException;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -26,10 +27,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.when;
  * NOTE: This test will _only_ work if the fedora mentioned in the test
  * config is available and contains the expected data.
  */
-@Ignore
+@Disabled
 public class PIDRegistrationsIntegrationTest {
     private static final PropertyBasedRegistrarConfiguration CONFIG
             = new PropertyBasedRegistrarConfiguration(

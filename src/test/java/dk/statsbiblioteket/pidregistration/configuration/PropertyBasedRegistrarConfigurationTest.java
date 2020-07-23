@@ -1,19 +1,20 @@
 package dk.statsbiblioteket.pidregistration.configuration;
 
-import dk.statsbiblioteket.pidregistration.Collection;
-import junit.framework.TestCase;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.junit.jupiter.api.Test;
+
+import dk.statsbiblioteket.pidregistration.Collection;
 
 /**
  * Test properties load as expected.
  */
-public class PropertyBasedRegistrarConfigurationTest extends TestCase {
+public class PropertyBasedRegistrarConfigurationTest {
     private PropertyBasedRegistrarConfiguration config
             = new PropertyBasedRegistrarConfiguration(
             getClass().getResourceAsStream("/doms-pidregistration-testfile.properties"));

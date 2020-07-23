@@ -9,9 +9,10 @@ import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
 import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import net.handle.hdllib.HandleException;
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import javax.xml.transform.TransformerException;
 import java.io.BufferedReader;
@@ -24,7 +25,7 @@ import java.util.Date;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@Ignore
+@Disabled
 public class PidRegistrationPerformanceTest {
 
     private static final PropertyBasedRegistrarConfiguration CONFIG
@@ -76,7 +77,7 @@ public class PidRegistrationPerformanceTest {
         return result;
     }
 
-    @After
+    @AfterEach
     public void teardown() throws HandleException, TransformerException {
         long start = System.currentTimeMillis();
         pidRegistrations.doUnregistrations();

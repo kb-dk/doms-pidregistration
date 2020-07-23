@@ -10,8 +10,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Test;
+
 import net.handle.hdllib.HandleValue;
-import org.junit.Test;
 
 public class GlobalHandleRegistryTest {
     private static final PIDHandle PID = new PIDHandle("109.3.1", "uuid:663d0baa-c08f-4b6e-bd07-35ec0b382ebb");

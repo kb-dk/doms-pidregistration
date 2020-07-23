@@ -5,8 +5,8 @@ import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.CentralWebser
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.InvalidCredentialsException;
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.MethodFailedException;
 import dk.statsbiblioteket.pidregistration.wsgen.centralwebservice.RecordDescription;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-@Ignore
+@Disabled
 public class CentralWebserviceTest {
 
     private static final QName CENTRAL_WEBSERVICE_SERVICE = new QName(
