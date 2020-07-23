@@ -1,10 +1,15 @@
 package dk.statsbiblioteket.pidregistration.handlesystem;
 
 import dk.statsbiblioteket.pidregistration.PIDHandle;
-import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarConfiguration;
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
-import mockit.Verifications;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import net.handle.hdllib.HandleValue;
 import org.junit.Test;
 
@@ -13,88 +18,61 @@ public class GlobalHandleRegistryTest {
     private static final String URL
             = "pid.statsbiblioteket.dk/doms_radioTVCollection/uuid:663d0baa-c08f-4b6e-bd07-35ec0b382ebb";
 
-    private PropertyBasedRegistrarConfiguration config
-            = new PropertyBasedRegistrarConfiguration(
-            getClass().getResourceAsStream("/doms-pidregistration.properties"));
-
-    private boolean inTestmode = true;
-    @Mocked(methods = "registerPid(PIDHandle, String)", inverse = true)
-    private GlobalHandleRegistry globalHandleRegistry = new GlobalHandleRegistry(config, inTestmode);
-
     @Test
     public void testCreateNewPidRegistration() {
-        new NonStrictExpectations() {
-            {
-                invoke(globalHandleRegistry, "lookupHandle", PID); result = null;
-            }
-        };
+        GlobalHandleRegistry globalHandleRegistry = mock(GlobalHandleRegistry.class);
+        when(globalHandleRegistry.registerPid(eq(PID), eq(URL))).thenCallRealMethod();
 
         globalHandleRegistry.registerPid(PID, URL);
 
-        new Verifications() {
-            {
-                invoke(globalHandleRegistry, "createPidWithUrl", PID, URL); times = 1;
-                invoke(globalHandleRegistry, "addUrlToPid", withAny(PIDHandle.class), anyString); times = 0;
-                invoke(globalHandleRegistry, "replaceUrlOfPid", withAny(PIDHandle.class), anyString); times = 0;
-            }
-        };
+        verify(globalHandleRegistry, times(1)).createPidWithUrl(PID, URL);
+        verify(globalHandleRegistry, times(0)).addUrlToPid(any(PIDHandle.class), anyString());
+        verify(globalHandleRegistry, times(0)).replaceUrlOfPid(any(PIDHandle.class), anyString());
     }
 
     @Test
     public void testAddUrlToPid() {
-        new NonStrictExpectations() {
-            {
-                invoke(globalHandleRegistry, "findFirstWithTypeUrl", HandleValue[].class); result = null;
-            }
-        };
+        GlobalHandleRegistry globalHandleRegistry = mock(GlobalHandleRegistry.class);
+        when(globalHandleRegistry.registerPid(eq(PID), eq(URL))).thenCallRealMethod();
+        HandleValue hv = new HandleValue();
+        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{hv});
 
         globalHandleRegistry.registerPid(PID, URL);
 
-        new Verifications() {
-            {
-                invoke(globalHandleRegistry, "createPidWithUrl", withAny(PIDHandle.class), anyString); times = 0;
-                invoke(globalHandleRegistry, "addUrlToPid", PID, URL); times = 1;
-                invoke(globalHandleRegistry, "replaceUrlOfPid", withAny(PIDHandle.class), anyString); times = 0;
-            }
-        };
+        verify(globalHandleRegistry, times(0)).createPidWithUrl(any(PIDHandle.class), anyString());
+        verify(globalHandleRegistry, times(1)).addUrlToPid(PID, URL);
+        verify(globalHandleRegistry, times(0)).replaceUrlOfPid(any(PIDHandle.class), anyString());
     }
     
     @Test
     public void testReplaceUrlAtPidWithDifferentUrl() {
-        new NonStrictExpectations() {
-            {
-                invoke(globalHandleRegistry, "findFirstWithTypeUrl", withAny(HandleValue[].class)); result = URL;
-            }
-        };
         final String someOtherUrl = "http://some.other.url";
+        
+        GlobalHandleRegistry globalHandleRegistry = mock(GlobalHandleRegistry.class);
+        when(globalHandleRegistry.registerPid(eq(PID), eq(someOtherUrl))).thenCallRealMethod();
+        HandleValue hv = new HandleValue(); 
+        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{hv});
+        when(globalHandleRegistry.findFirstWithTypeUrl(any(HandleValue[].class))).thenReturn(URL);
 
         globalHandleRegistry.registerPid(PID, someOtherUrl);
-
-        new Verifications() {
-            {
-                invoke(globalHandleRegistry, "createPidWithUrl", withAny(PIDHandle.class), anyString); times = 0;
-                invoke(globalHandleRegistry, "addUrlToPid", withAny(PIDHandle.class), anyString); times = 0;
-                invoke(globalHandleRegistry, "replaceUrlOfPid", PID, someOtherUrl); times = 1;
-            }
-        };
+        
+        verify(globalHandleRegistry, times(0)).createPidWithUrl(any(PIDHandle.class), anyString());
+        verify(globalHandleRegistry, times(0)).addUrlToPid(any(PIDHandle.class), anyString());
+        verify(globalHandleRegistry, times(1)).replaceUrlOfPid(any(PIDHandle.class), eq(someOtherUrl));
     }
     
     @Test
     public void testThatReplacingUrlAtPidWithSameUrlDoesNothing() {
-        new NonStrictExpectations() {
-            {
-                invoke(globalHandleRegistry, "findFirstWithTypeUrl", withAny(HandleValue[].class)); result = URL;
-            }
-        };
+        GlobalHandleRegistry globalHandleRegistry = mock(GlobalHandleRegistry.class);
+        when(globalHandleRegistry.registerPid(eq(PID), eq(URL))).thenCallRealMethod();
+        HandleValue hv = new HandleValue();
+        when(globalHandleRegistry.lookupHandle(eq(PID))).thenReturn(new HandleValue[]{hv});
+        when(globalHandleRegistry.findFirstWithTypeUrl(any(HandleValue[].class))).thenReturn(URL);
 
         globalHandleRegistry.registerPid(PID, URL);
-
-        new Verifications() {
-            {
-                invoke(globalHandleRegistry, "createPidWithUrl", withAny(PIDHandle.class), anyString); times = 0;
-                invoke(globalHandleRegistry, "addUrlToPid", withAny(PIDHandle.class), anyString); times = 0;
-                invoke(globalHandleRegistry, "replaceUrlOfPid", withAny(PIDHandle.class), anyString); times = 0;
-            }
-        };
+        
+        verify(globalHandleRegistry, times(0)).createPidWithUrl(any(PIDHandle.class), anyString());
+        verify(globalHandleRegistry, times(0)).addUrlToPid(any(PIDHandle.class), anyString());
+        verify(globalHandleRegistry, times(0)).replaceUrlOfPid(any(PIDHandle.class), anyString());
     }
 }

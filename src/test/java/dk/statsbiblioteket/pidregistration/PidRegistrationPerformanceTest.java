@@ -4,11 +4,10 @@ import dk.statsbiblioteket.pidregistration.configuration.PropertyBasedRegistrarC
 import dk.statsbiblioteket.pidregistration.database.ConnectionFactory;
 import dk.statsbiblioteket.pidregistration.database.DatabaseSchema;
 import dk.statsbiblioteket.pidregistration.doms.DOMSClient;
+import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryResult;
 import dk.statsbiblioteket.pidregistration.doms.DOMSObjectIDQueryer;
 import dk.statsbiblioteket.pidregistration.doms.DOMSUpdater;
 import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
 import net.handle.hdllib.HandleException;
 import org.junit.After;
 import org.junit.Ignore;
@@ -22,6 +21,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 @Ignore
 public class PidRegistrationPerformanceTest {
 
@@ -29,8 +31,7 @@ public class PidRegistrationPerformanceTest {
             = new PropertyBasedRegistrarConfiguration(
             PIDRegistrationsIntegrationTest.class.getResourceAsStream("/doms-pidregistration.properties"));
 
-    @Mocked
-    private DOMSObjectIDQueryer domsObjectIdQueryer = null;
+        private DOMSObjectIDQueryer domsObjectIdQueryer = null;
 
     private boolean inTestmode = false;
     private DOMSClient domsClient = new DOMSClient(CONFIG);
@@ -45,14 +46,12 @@ public class PidRegistrationPerformanceTest {
 
     @Test
     public void testRegistrations() throws TransformerException, HandleException, IOException {
-        new NonStrictExpectations() {{
+        domsObjectIdQueryer = mock(DOMSObjectIDQueryer.class);
+        when(domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION), new Date(0)))
+            .thenReturn(new DOMSObjectIDQueryResult(fetchIds("radiotv.txt"), new Date(0)));
 
-            domsObjectIdQueryer.findNextIn(new Collection(TV_ID, TV_DOMS_COLLECTION), new Date(0));
-            returns(fetchIds("radiotv.txt"), new ArrayList<String>());
-
-            domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION), new Date(0));
-            returns(fetchIds("reklamefilm.txt"), new ArrayList<String>());
-        }};
+        when(domsObjectIdQueryer.findNextIn(new Collection(REKLAME_ID, REKLAME_DOMS_COLLECTION), new Date(0)))
+            .thenReturn(new DOMSObjectIDQueryResult(fetchIds("reklamefilm.txt"), new Date(0)));
 
         new DatabaseSchema(new ConnectionFactory(CONFIG)).removeIfExists();
 
