@@ -2,6 +2,12 @@ Release history for the doms-pidregistration project.
 
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
+
+1.2
+ * Update dependencies to latest versions
+ * Change log framework from log4j to logback (via slf4j)
+ * Fix code issues reported by forbiddenapis
+
 1.1 released 2016-10-25
  * Add support for multithreaded pid registration
 
