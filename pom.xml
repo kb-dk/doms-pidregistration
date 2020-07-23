@@ -186,7 +186,7 @@
          <api.check.phase>none</api.check.phase>
          to disable forbidden APIs check -->
     <api.check.phase>process-test-classes</api.check.phase>
-    <additionalparam>-Xdoclint:none</additionalparam>
+    <additionalJOption>-Xdoclint:none</additionalJOption>
   </properties>
 
 </project>
