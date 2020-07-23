@@ -216,7 +216,14 @@
   </build>
 
   <properties>
-    <additionalparam>-Xdoclint:none</additionalparam>
+    <!-- Specify java version here, to support forbiddenapis plugin -->
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <!-- Replace the line below with
+         <api.check.phase>none</api.check.phase>
+         to disable forbidden APIs check -->
+    <api.check.phase>process-test-classes</api.check.phase>
+    <additionalJOption>-Xdoclint:none</additionalJOption>
   </properties>
 
 </project>
