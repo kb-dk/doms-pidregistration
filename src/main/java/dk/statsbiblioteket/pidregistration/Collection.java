@@ -1,5 +1,7 @@
 package dk.statsbiblioteket.pidregistration;
 
+import java.util.Locale;
+
 /**
  */
 public class Collection {
@@ -41,6 +43,6 @@ public class Collection {
 
     @Override
     public String toString() {
-        return String.format("{'%s':'%s'}", id, domsName);
+        return String.format(Locale.ROOT, "{'%s':'%s'}", id, domsName);
     }
 }

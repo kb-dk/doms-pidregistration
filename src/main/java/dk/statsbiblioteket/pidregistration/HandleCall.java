@@ -9,6 +9,7 @@ import dk.statsbiblioteket.pidregistration.handlesystem.GlobalHandleRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 
@@ -42,8 +43,8 @@ public class HandleCall implements Callable<Boolean> {
         log.info("Handling object ID '{}'", jobDto.getUuid());
         PIDHandle pidHandle = new PIDHandle(configuration.getHandlePrefix(), jobDto.getUuid());
         boolean domsChanged = updateDoms(pidHandle);
-        String url = String.format(
-                "%s/%s/%s", configuration.getPidPrefix(), jobDto.getCollectionId(), pidHandle.getId());
+        String url = String.format(Locale.ROOT, "%s/%s/%s", 
+                configuration.getPidPrefix(), jobDto.getCollectionId(), pidHandle.getId());
         boolean handleRegistryChanged = handleRegistry.registerPid(
                 pidHandle,
                 url

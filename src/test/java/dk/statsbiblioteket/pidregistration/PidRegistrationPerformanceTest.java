@@ -18,6 +18,7 @@ import javax.xml.transform.TransformerException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -66,7 +67,8 @@ public class PidRegistrationPerformanceTest {
     private ArrayList<String> fetchIds(String filename) throws IOException {
         ArrayList<String> result = new ArrayList<String>();
         String resourceName = "/" + filename;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(resourceName)));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(resourceName),
+                StandardCharsets.UTF_8));
         String line;
         while ((line = reader.readLine()) != null) {
             result.add(line);

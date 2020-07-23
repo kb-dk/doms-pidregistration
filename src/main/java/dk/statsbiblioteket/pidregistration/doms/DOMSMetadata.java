@@ -9,6 +9,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.util.Locale;
+
 import javax.xml.transform.TransformerException;
 
 /**
@@ -38,7 +40,7 @@ public class DOMSMetadata {
     }
 
     private NodeList findHandleNodes(PIDHandle handle) {
-        String xpath = String.format(XPATH_HANDLE_PATTERN, handle.asString());
+        String xpath = String.format(Locale.ROOT, XPATH_HANDLE_PATTERN, handle.asString());
         return NAMESPACED_SELECTOR.selectNodeList(namespaceAwareDom, xpath);
     }
 
