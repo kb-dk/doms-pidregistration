@@ -67,13 +67,14 @@ public class PidRegistrationPerformanceTest {
     private ArrayList<String> fetchIds(String filename) throws IOException {
         ArrayList<String> result = new ArrayList<String>();
         String resourceName = "/" + filename;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(resourceName),
-                StandardCharsets.UTF_8));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            result.add(line);
+        try(BufferedReader reader = new BufferedReader(
+                new InputStreamReader(getClass().getResourceAsStream(resourceName), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.add(line);
+            }
         }
-        reader.close();
+        
         return result;
     }
 
