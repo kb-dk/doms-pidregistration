@@ -3,6 +3,12 @@ Release history for the doms-pidregistration project.
 New entries are added at the top and should include the date for each release as well as mentioning new features
 briefly.
 
+1.0.8.4 released 2020-07-23
+ * Rebuild code to Java 8
+ * Update dependencies to latest versions
+ * Change log framework from log4j to logback (via slf4j)
+ * Fix code issues reported by forbiddenapis
+
 1.0.8.3 released 2016-07-04
  * Change to jre7 edition of postgres JDBC driver - fixes broken 1.0.8.2 release
 
