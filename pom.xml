@@ -13,9 +13,9 @@
   </parent>
 
   <scm>
-    <connection>scm:git:https://github.com/statsbiblioteket/doms-pidregistration.git</connection>
-    <developerConnection>scm:git:git@github.com:statsbiblioteket/doms-pidregistration</developerConnection>
-    <url>https://github.com/statsbiblioteket/doms-pidregistration</url>
+    <connection>scm:git:https://github.com/kb-dk/doms-pidregistration.git</connection>
+    <developerConnection>scm:git:git@github.com:kb-dk/doms-pidregistration</developerConnection>
+    <url>https://github.com/kb-dk/doms-pidregistration</url>
     <tag>HEAD</tag>
   </scm>
   <repositories>
